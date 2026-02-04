@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useAppTheme } from '@theme/ThemeProvider';
 
 export const HomeScreen = () => {
   const theme = useAppTheme();
+
+  useEffect(() => {
+    // HomeScreen mounted
+  }, [theme]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>

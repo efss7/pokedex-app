@@ -1,11 +1,22 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  DefaultTheme,
+  DarkTheme,
+} from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PokemonListScreen } from '@screens/PokemonListScreen';
+import { PokemonDetailScreen } from '@screens/PokemonDetailScreen';
+import { FavoritesScreen } from '@screens/FavoritesScreen';
 import { useAppTheme } from '@theme/ThemeProvider';
 
 export type RootStackParamList = {
   PokemonList: undefined;
+  Favorites: undefined;
+  PokemonDetail: {
+    pokemonId: number;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -13,8 +24,22 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export const AppNavigator = () => {
   const theme = useAppTheme();
 
+  // Alinha o tema de navegação (fundos, bordas) ao tema do app.
+  const navigationTheme = {
+    ...(theme.dark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(theme.dark ? DarkTheme : DefaultTheme).colors,
+      background: theme.colors.background,
+      card: theme.colors.primary,
+      text: '#FFFFFF',
+      border: theme.colors.border,
+      primary: theme.colors.primary,
+    },
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
+      <StatusBar style="light" />
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
@@ -30,6 +55,19 @@ export const AppNavigator = () => {
           name="PokemonList" 
           component={PokemonListScreen}
           options={{ title: 'Pokédex' }}
+        />
+        <Stack.Screen 
+          name="Favorites" 
+          component={FavoritesScreen}
+          options={{ title: 'Favoritos' }}
+        />
+        <Stack.Screen 
+          name="PokemonDetail" 
+          component={PokemonDetailScreen}
+          options={{ 
+            title: 'Detalhes',
+            headerBackTitle: 'Voltar',
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

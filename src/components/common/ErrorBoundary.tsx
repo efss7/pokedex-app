@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@theme/ThemeProvider';
 
 interface ErrorBoundaryProps {
@@ -44,7 +45,7 @@ const DefaultErrorFallback = () => {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.content, { backgroundColor: theme.colors.surface }]}>
-        <Text style={[styles.emoji]}>⚠️</Text>
+        <MaterialIcons name="warning" size={48} color={theme.colors.error} style={styles.icon} />
         <Text style={[styles.title, { color: theme.colors.error }]}>
           Algo deu errado
         </Text>
@@ -68,8 +69,7 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
   },
-  emoji: {
-    fontSize: 48,
+  icon: {
     marginBottom: 16,
   },
   title: {

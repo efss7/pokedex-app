@@ -1,6 +1,4 @@
-import { MMKV } from 'react-native-mmkv';
-
-export const storage = new MMKV();
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const storageKeys = {
   THEME_MODE: 'theme_mode',
@@ -10,28 +8,28 @@ export const storageKeys = {
 
 // Helper functions
 export const storageHelpers = {
-  setItem: (key: string, value: string) => {
-    storage.set(key, value);
+  setItem: async (key: string, value: string) => {
+    await AsyncStorage.setItem(key, value);
   },
-  
-  getItem: (key: string): string | undefined => {
-    return storage.getString(key);
+
+  getItem: async (key: string): Promise<string | null> => {
+    return AsyncStorage.getItem(key);
   },
-  
-  setObject: (key: string, value: any) => {
-    storage.set(key, JSON.stringify(value));
+
+  setObject: async (key: string, value: unknown) => {
+    await AsyncStorage.setItem(key, JSON.stringify(value));
   },
-  
-  getObject: <T>(key: string): T | null => {
-    const item = storage.getString(key);
-    return item ? JSON.parse(item) : null;
+
+  getObject: async <T>(key: string): Promise<T | null> => {
+    const item = await AsyncStorage.getItem(key);
+    return item ? (JSON.parse(item) as T) : null;
   },
-  
-  removeItem: (key: string) => {
-    storage.delete(key);
+
+  removeItem: async (key: string) => {
+    await AsyncStorage.removeItem(key);
   },
-  
-  clearAll: () => {
-    storage.clearAll();
+
+  clearAll: async () => {
+    await AsyncStorage.clear();
   },
 };

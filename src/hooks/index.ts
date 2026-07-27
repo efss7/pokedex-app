@@ -1,11 +1,20 @@
 /**
  * Exporta todos os hooks customizados
- * Facilita imports: import { usePokemonList, usePokemon } from '@hooks';
+ * Facilita imports: import { usePokemonListState } from '@hooks';
  */
 
-export { usePokemonList } from './usePokemonList';
+export { usePokemonListInfinite } from './usePokemonList';
 export { usePokemon } from './usePokemon';
+export { usePokemonDetails } from './usePokemonDetails';
 export { useDebounce } from './useDebounce';
-export { usePokemonByType } from './usePokemonByType';
-export { usePokemonSearch } from './usePokemonSearch';
+export { usePokemonByTypeInfinite } from './usePokemonByType';
+export { usePokemonIndex } from './usePokemonIndex';
+export { usePokemonCardTypes } from './usePokemonCardTypes';
+export { useTypeEffectiveness } from './useTypeEffectiveness';
 export { usePokemonListState } from './usePokemonListState';
+export {
+  useAnimatedEntrance,
+  useScaleBounce,
+  useRotateEntrance,
+  useCombinedEntrance,
+} from './useAnimations';

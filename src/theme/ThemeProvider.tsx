@@ -1,4 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
+import { useColorScheme } from 'react-native';
 import { useThemeStore } from '@store/themeStore';
 import { lightTheme, darkTheme, Theme } from '@theme/index';
 
@@ -17,12 +18,14 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const themeMode = useThemeStore((state) => state.themeMode);
-  const theme = themeMode === 'dark' ? darkTheme : lightTheme;
+  const preference = useThemeStore((state) => state.preference);
+  const systemScheme = useColorScheme(); // 'light' | 'dark' | null
+
+  const resolvedMode =
+    preference === 'system' ? systemScheme ?? 'light' : preference;
+  const theme = resolvedMode === 'dark' ? darkTheme : lightTheme;
 
   return (
-    <ThemeContext.Provider value={theme}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
   );
 };

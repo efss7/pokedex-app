@@ -1,7 +1,7 @@
 export const APP_NAME = 'Pokedex';
 export const API_BASE_URL = 'https://pokeapi.co/api/v2';
 export const ITEMS_PER_PAGE = 20;
-export const MAX_POKEMON_ID = 1010; // Update as new generations release
+export const MAX_POKEMON_ID = 1025; // Update as new generations release
 
 export const POKEMON_TYPES = [
   'normal', 'fire', 'water', 'electric', 'grass', 'ice',
@@ -35,3 +35,33 @@ export const TYPE_COLORS: Record<string, string> = {
   steel: '#B8B8D0',
   fairy: '#EE99AC',
 };
+
+/**
+ * Mapeamento de nomes dos stats para PT-BR
+ */
+export const STAT_NAMES: Record<string, string> = {
+  hp: 'HP',
+  attack: 'Ataque',
+  defense: 'Defesa',
+  'special-attack': 'Atq. Esp.',
+  'special-defense': 'Def. Esp.',
+  speed: 'Velocidade',
+};
+
+/**
+ * Cores dos stats para visualização em gráficos
+ */
+export const STAT_COLORS: Record<string, string> = {
+  hp: '#FF5959',
+  attack: '#F08030',
+  defense: '#FAE078',
+  'special-attack': '#9DB7F5',
+  'special-defense': '#A7DB8D',
+  speed: '#FA92B2',
+};
+
+/**
+ * Valor máximo teórico de cada stat (para cálculo de porcentagem)
+ * Baseado nos maiores valores possíveis na série
+ */
+export const MAX_STAT_VALUE = 255;

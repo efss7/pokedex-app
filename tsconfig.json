@@ -13,10 +13,12 @@
       "@navigation/*": ["src/navigation/*"],
       "@services/*": ["src/services/*"],
       "@store/*": ["src/store/*"],
+      "@hooks": ["src/hooks/index"],
       "@hooks/*": ["src/hooks/*"],
       "@utils/*": ["src/utils/*"],
       "@types/*": ["src/types/*"],
       "@theme/*": ["src/theme/*"],
+      "@constants": ["src/constants/index"],
       "@constants/*": ["src/constants/*"]
     }
   }

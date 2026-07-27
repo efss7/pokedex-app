@@ -1,3 +1,10 @@
+/**
+ * Cores da interface (UI).
+ *
+ * As cores dos TIPOS de pokémon vivem em `@constants` (TYPE_COLORS) — fonte
+ * única de verdade, reutilizada por cards, badges e telas. Não duplicar aqui.
+ */
+
 export const lightColors = {
   primary: '#DC0A2D',
   secondary: '#EFEFEF',
@@ -10,29 +17,9 @@ export const lightColors = {
   success: '#4CAF50',
   warning: '#FF9800',
   info: '#2196F3',
-  
-  // Pokemon Type Colors
-  bug: '#A7B723',
-  dark: '#75574C',
-  dragon: '#7037FF',
-  electric: '#F9CF30',
-  fairy: '#E69EAC',
-  fighting: '#C12239',
-  fire: '#F57D31',
-  flying: '#A891EC',
-  ghost: '#70559B',
-  grass: '#74CB48',
-  ground: '#DEC16B',
-  ice: '#9AD6DF',
-  normal: '#AAA67F',
-  poison: '#A43E9E',
-  psychic: '#FB5584',
-  rock: '#B69E31',
-  steel: '#B7B9D0',
-  water: '#6493EB',
 };
 
-export const darkColors = {
+export const darkColors: typeof lightColors = {
   primary: '#DC0A2D',
   secondary: '#2C2C2C',
   background: '#121212',
@@ -44,24 +31,4 @@ export const darkColors = {
   success: '#81C784',
   warning: '#FFB74D',
   info: '#64B5F6',
-  
-  // Pokemon Type Colors (same as light)
-  bug: '#A7B723',
-  dark: '#75574C',
-  dragon: '#7037FF',
-  electric: '#F9CF30',
-  fairy: '#E69EAC',
-  fighting: '#C12239',
-  fire: '#F57D31',
-  flying: '#A891EC',
-  ghost: '#70559B',
-  grass: '#74CB48',
-  ground: '#DEC16B',
-  ice: '#9AD6DF',
-  normal: '#AAA67F',
-  poison: '#A43E9E',
-  psychic: '#FB5584',
-  rock: '#B69E31',
-  steel: '#B7B9D0',
-  water: '#6493EB',
 };

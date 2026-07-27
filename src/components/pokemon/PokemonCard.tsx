@@ -1,15 +1,17 @@
 import React, { useRef, useEffect } from 'react';
-import { jsx as _jsx } from 'react/jsx-runtime';
 import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   Dimensions,
   Animated,
 } from 'react-native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@theme/ThemeProvider';
+import { useFavoritesStore } from '@store/favoritesStore';
+import { usePokemonCardTypes } from '@hooks/usePokemonCardTypes';
 import type { SimplifiedPokemon } from '@/types/pokemon';
 import { TYPE_COLORS } from '@constants';
 
@@ -23,29 +25,23 @@ interface PokemonCardProps {
 
 /**
  * Card visual do Pokémon
- * 
- * Features:
- * - Fade-in na entrada
- * - Scale ao pressionar
- * - Simples e clean
+ *
+ * - Cache de imagem em disco (expo-image)
+ * - Hidratação lazy de tipos quando o card vem do índice (busca)
+ * - Memoizado para evitar re-renders desnecessários no FlatList
  */
-export const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onPress }) => {
+const PokemonCardComponent: React.FC<PokemonCardProps> = ({ pokemon, onPress }) => {
   const theme = useAppTheme();
+  const isFavorite = useFavoritesStore((state) => state.favorites.includes(pokemon.id));
 
-  // Animações simples
+  // Se o card veio do índice leve (sem tipos), busca-os sob demanda.
+  const needsTypes = pokemon.types.length === 0;
+  const { data: fetchedTypes } = usePokemonCardTypes(pokemon.id, needsTypes);
+  const types = needsTypes ? fetchedTypes ?? [] : pokemon.types;
+
+  // Animação de press (a de entrada agora é feita pelo expo-image transition)
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Fade-in na entrada
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
-
-  // Animação de press
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
       toValue: 0.95,
@@ -64,92 +60,95 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onPress }) =>
     }).start();
   };
 
-  const handlePress = () => {
-    onPress?.();
-  };
-
-  // Estilos animados
-  const cardStyle = {
-    opacity: fadeAnim,
-    transform: [{ scale: scaleAnim }],
-  };
-
-  /**
-   * Pega a cor do tipo primário do Pokémon
-   */
-  const primaryTypeColor = TYPE_COLORS[pokemon.types[0]] || theme.colors.primary;
-
-  /**
-   * Formata o ID com zeros à esquerda (#001, #025, #150)
-   */
+  const primaryTypeColor = TYPE_COLORS[types[0]] || theme.colors.primary;
   const formattedId = `#${pokemon.id.toString().padStart(3, '0')}`;
 
   return (
     <TouchableOpacity
-      onPress={handlePress}
+      onPress={() => onPress?.()}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       activeOpacity={1}
       style={styles.touchable}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver detalhes de ${pokemon.name}`}
     >
       <Animated.View
         style={[
           styles.card,
           { backgroundColor: theme.colors.surface },
-          cardStyle,
+          { transform: [{ scale: scaleAnim }] },
         ]}
       >
-      {/* Fundo colorido baseado no tipo */}
-      <View
-        style={[
-          styles.typeBackground,
-          { backgroundColor: primaryTypeColor + '20' }, // 20 = 12% opacity em hex
-        ]}
-      />
-
-      {/* ID do Pokémon */}
-      <Text style={[styles.id, { color: theme.colors.textSecondary }]}>
-        {formattedId}
-      </Text>
-
-      {/* Imagem do Pokémon */}
-      <Image
-        source={{ uri: pokemon.imageUrl }}
-        style={styles.image}
-        resizeMode="contain"
-      />
-
-      {/* Nome do Pokémon */}
-      <Text
-        style={[styles.name, { color: theme.colors.text }]}
-        numberOfLines={1}
-      >
-        {pokemon.name}
-      </Text>
-
-      {/* Badges dos tipos */}
-      <View style={styles.typesContainer}>
-        {pokemon.types.map((type: string) => (
-          <View
-            key={type}
-            style={[
-              styles.typeBadge,
-              { backgroundColor: TYPE_COLORS[type] || theme.colors.primary },
-            ]}
-          >
-            <Text style={styles.typeText}>{type}</Text>
+        {isFavorite && (
+          <View style={styles.favoriteBadge}>
+            <Ionicons name="heart" size={14} color="#FFFFFF" />
           </View>
-        ))}
-      </View>
+        )}
+        {/* Fundo colorido baseado no tipo */}
+        <View
+          style={[
+            styles.typeBackground,
+            { backgroundColor: primaryTypeColor + '20' }, // 20 = 12% opacity em hex
+          ]}
+        />
 
-      {/* Padrão pokébola de fundo (decorativo) */}
-      <View style={styles.pokeballPattern}>
-        <View style={[styles.pokeballCircle, { borderColor: primaryTypeColor + '10' }]} />
-      </View>
+        {/* ID do Pokémon */}
+        <Text style={[styles.id, { color: theme.colors.textSecondary }]}>
+          {formattedId}
+        </Text>
+
+        {/* Imagem do Pokémon (cache em disco + fade-in) */}
+        <Image
+          source={pokemon.imageUrl}
+          style={styles.image}
+          contentFit="contain"
+          transition={250}
+          cachePolicy="memory-disk"
+        />
+
+        {/* Nome do Pokémon */}
+        <Text
+          style={[styles.name, { color: theme.colors.text }]}
+          numberOfLines={1}
+        >
+          {pokemon.name}
+        </Text>
+
+        {/* Badges dos tipos */}
+        <View style={styles.typesContainer}>
+          {types.map((type: string) => (
+            <View
+              key={type}
+              style={[
+                styles.typeBadge,
+                { backgroundColor: TYPE_COLORS[type] || theme.colors.primary },
+              ]}
+            >
+              <Text style={styles.typeText}>{type}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Padrão pokébola de fundo (decorativo) */}
+        <View style={styles.pokeballPattern}>
+          <View style={[styles.pokeballCircle, { borderColor: primaryTypeColor + '10' }]} />
+        </View>
       </Animated.View>
     </TouchableOpacity>
   );
 };
+
+/**
+ * Memoizado: só re-renderiza se o pokémon (id/tipos) ou o handler mudarem.
+ */
+export const PokemonCard = React.memo(
+  PokemonCardComponent,
+  (prev, next) =>
+    prev.pokemon.id === next.pokemon.id &&
+    prev.pokemon.types.length === next.pokemon.types.length &&
+    prev.onPress === next.onPress
+);
 
 const styles = StyleSheet.create({
   touchable: {
@@ -176,6 +175,18 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  favoriteBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    zIndex: 2,
   },
   id: {
     fontSize: 12,

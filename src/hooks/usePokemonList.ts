@@ -1,61 +1,58 @@
-import { useQuery } from '@tanstack/react-query';
-import { getPokemonList, getPokemonDetails, getPokemonIdFromUrl, simplifyPokemon } from '@services/pokemonService';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import {
+  getPokemonList,
+  getPokemonDetails,
+  getPokemonIdFromUrl,
+  simplifyPokemon,
+} from '@services/pokemonService';
 import type { SimplifiedPokemon } from '../types/pokemon';
+import { ITEMS_PER_PAGE, MAX_POKEMON_ID } from '@constants/index';
 
 /**
- * Hook para buscar lista de pokémons com paginação
- * 
- * @param limit - Quantidade de pokémons por página (padrão: 20)
- * @param offset - Índice inicial para paginação (padrão: 0)
- * 
- * @returns {object} Objeto com:
- *  - data: Array de pokémons simplificados
- *  - isLoading: true enquanto carrega
- *  - error: objeto de erro se houver falha
- *  - refetch: função para recarregar
- * 
- * @example
- * ```tsx
- * const { data, isLoading } = usePokemonList(20, 0);
- * 
- * if (isLoading) return <Loading />;
- * return <PokemonCard pokemon={data[0]} />;
- * ```
+ * Busca uma página da lista geral e hidrata os detalhes (tipos + imagem).
+ * Ignora formas alternativas (ids 10000+), que não têm espécie/artwork.
  */
-export const usePokemonList = (limit = 20, offset = 0, enabled = true) => {
-  return useQuery({
-    // QueryKey: identificador único para cache
-    // Se limit/offset mudar, faz nova requisição
-    queryKey: ['pokemonList', limit, offset],
-    
-    // QueryFn: função que busca os dados
+const fetchListPage = async (offset: number): Promise<SimplifiedPokemon[]> => {
+  const listResponse = await getPokemonList(ITEMS_PER_PAGE, offset);
+  const validItems = listResponse.results.filter(
+    (item) => getPokemonIdFromUrl(item.url) <= MAX_POKEMON_ID
+  );
+  const details = await Promise.all(
+    validItems.map(async (item) => {
+      const id = getPokemonIdFromUrl(item.url);
+      return simplifyPokemon(await getPokemonDetails(id));
+    })
+  );
+  return details;
+};
+
+/**
+ * Lista paginada de pokémons com scroll infinito.
+ *
+ * Substitui o antigo controle manual de página + acúmulo em `useEffect`.
+ * O TanStack Query cuida de paginação, cache e acúmulo das páginas.
+ *
+ * @example
+ * const { data, fetchNextPage, hasNextPage } = usePokemonListInfinite();
+ * const pokemons = data?.pages.flat() ?? [];
+ */
+export const usePokemonListInfinite = (enabled = true) => {
+  return useInfiniteQuery({
+    queryKey: ['pokemonList', 'infinite'],
     enabled,
-    queryFn: async (): Promise<SimplifiedPokemon[]> => {
-      try {
-        // 1. Busca a lista básica (só nomes e URLs)
-        const listResponse = await getPokemonList(limit, offset);
-        
-        // 2. Para cada item, busca os detalhes completos
-        // Fazemos em paralelo com Promise.all para ser mais rápido
-        const pokemonDetails = await Promise.all(
-          listResponse.results.map(async (item) => {
-            const id = getPokemonIdFromUrl(item.url);
-            const details = await getPokemonDetails(id);
-            
-            // 3. Transforma em versão simplificada usando a função helper
-            return simplifyPokemon(details);
-          })
-        );
-        
-        return pokemonDetails;
-      } catch (err) {
-        throw err;
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => fetchListPage(pageParam),
+    // Para quando a página veio incompleta (fim/formas filtradas) ou quando o
+    // próximo offset já passaria do último pokémon válido.
+    getNextPageParam: (lastPage, allPages) => {
+      const nextOffset = allPages.length * ITEMS_PER_PAGE;
+      if (lastPage.length < ITEMS_PER_PAGE || nextOffset >= MAX_POKEMON_ID) {
+        return undefined;
       }
+      return nextOffset;
     },
-    
-    // Configurações de cache e revalidação
-    staleTime: 1000 * 60 * 5, // Dados ficam "frescos" por 5 minutos
-    gcTime: 1000 * 60 * 10, // Cache é mantido por 10 minutos
-    retry: 2, // Tenta 2 vezes se falhar
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    retry: 2,
   });
 };

@@ -3,6 +3,7 @@
     "name": "pokedex-app",
     "slug": "pokedex-app",
     "version": "1.0.0",
+    "scheme": "mydex",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -21,7 +22,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.pokedexapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"

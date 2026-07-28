@@ -12,6 +12,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useAppTheme } from '@theme/ThemeProvider';
 import { useThemeStore } from '@store/themeStore';
+import { useAuthStore } from '@store/authStore';
 import { PokemonCardSkeleton } from '@components/pokemon/PokemonCardSkeleton';
 import { PokemonCard } from '@components/pokemon/PokemonCard';
 import { TypeFilter } from '@components/pokemon/TypeFilter';
@@ -46,6 +47,7 @@ export const PokemonListScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const themePreference = useThemeStore((state) => state.preference);
   const cyclePreference = useThemeStore((state) => state.cyclePreference);
+  const isAuthenticated = useAuthStore((state) => state.status === 'authenticated');
 
   const themeIcon =
     themePreference === 'system'
@@ -76,10 +78,23 @@ export const PokemonListScreen = () => {
           >
             <Ionicons name="heart" size={20} color="#FFFFFF" />
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Account')}
+            style={styles.headerButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Conta"
+          >
+            <Ionicons
+              name={isAuthenticated ? 'person-circle' : 'person-circle-outline'}
+              size={22}
+              color="#FFFFFF"
+            />
+          </TouchableOpacity>
         </View>
       ),
     });
-  }, [navigation, cyclePreference, themeIcon, themePreference]);
+  }, [navigation, cyclePreference, themeIcon, themePreference, isAuthenticated]);
 
   // Hook customizado que gerencia todo o estado complexo
   const {

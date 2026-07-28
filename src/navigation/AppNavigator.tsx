@@ -9,11 +9,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PokemonListScreen } from '@screens/PokemonListScreen';
 import { PokemonDetailScreen } from '@screens/PokemonDetailScreen';
 import { FavoritesScreen } from '@screens/FavoritesScreen';
+import { AccountScreen } from '@screens/AccountScreen';
 import { useAppTheme } from '@theme/ThemeProvider';
 
 export type RootStackParamList = {
   PokemonList: undefined;
   Favorites: undefined;
+  Account: undefined;
   PokemonDetail: {
     pokemonId: number;
   };
@@ -56,10 +58,15 @@ export const AppNavigator = () => {
           component={PokemonListScreen}
           options={{ title: 'Pokédex' }}
         />
-        <Stack.Screen 
-          name="Favorites" 
+        <Stack.Screen
+          name="Favorites"
           component={FavoritesScreen}
           options={{ title: 'Favoritos' }}
+        />
+        <Stack.Screen
+          name="Account"
+          component={AccountScreen}
+          options={{ title: 'Conta' }}
         />
         <Stack.Screen 
           name="PokemonDetail" 

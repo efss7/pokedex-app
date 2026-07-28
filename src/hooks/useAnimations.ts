@@ -57,37 +57,3 @@ export const useScaleBounce = (delay = 0) => {
   }));
 };
 
-/**
- * Animação de rotação suave.
- */
-export const useRotateEntrance = (delay = 0) => {
-  const rotate = useSharedValue(-10);
-
-  useEffect(() => {
-    rotate.value = withDelay(delay, withSpring(0, { damping: 8, stiffness: 80 }));
-  }, [delay, rotate]);
-
-  return useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotate.value}deg` }],
-  }));
-};
-
-/**
- * Animação de entrada combinada (fade + slide + scale).
- */
-export const useCombinedEntrance = (delay = 0) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(30);
-  const scale = useSharedValue(0.9);
-
-  useEffect(() => {
-    opacity.value = withDelay(delay, withTiming(1, { duration: 500 }));
-    translateY.value = withDelay(delay, withSpring(0, { damping: 12, stiffness: 100 }));
-    scale.value = withDelay(delay, withSpring(1, { damping: 12, stiffness: 100 }));
-  }, [delay, opacity, translateY, scale]);
-
-  return useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }, { scale: scale.value }],
-  }));
-};

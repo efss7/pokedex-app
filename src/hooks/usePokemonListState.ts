@@ -2,60 +2,107 @@ import { useMemo, useState } from 'react';
 import { usePokemonListInfinite } from './usePokemonList';
 import { usePokemonByTypeInfinite } from './usePokemonByType';
 import { usePokemonIndex } from './usePokemonIndex';
+import { useAbilityRosterIds, useTypeRosterIds } from './useFilterData';
+import { GENERATIONS } from '@constants/index';
 import type { SimplifiedPokemon } from '@/types/pokemon';
 
 /**
- * Estado da lista de pokémons: busca, filtro por tipo e paginação.
+ * Estado da lista: busca, filtro por tipo, filtros avançados (geração +
+ * habilidade) e paginação.
  *
- * São três modos, mutuamente exclusivos:
- *  - Busca por nome/ID → filtra o ÍNDICE em memória (1 request, instantâneo).
- *  - Filtro por tipo    → scroll infinito da lista daquele tipo.
- *  - Padrão             → scroll infinito da lista geral.
- *
- * A paginação e o acúmulo de páginas ficam a cargo do TanStack Query
- * (useInfiniteQuery), o que elimina o controle manual de página/acúmulo.
+ * Dois caminhos:
+ *  - Infinito (scroll): quando NÃO há busca nem filtro avançado — lista geral
+ *    ou lista de um tipo (useInfiniteQuery, tipos já hidratados).
+ *  - Índice (em memória): quando há busca OU filtro avançado — filtra o índice
+ *    por tipo/habilidade (rosters de IDs), geração (faixa de ID) e texto. Os
+ *    tipos dos cards são hidratados sob demanda.
  */
 export const usePokemonListState = () => {
   // O termo já vem "assentado" (debounced) do <SearchBar>.
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedGeneration, setSelectedGeneration] = useState<number | null>(null);
+  const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
 
   const search = searchTerm.trim().toLowerCase();
-
   const isSearching = search.length > 0;
   const isTypeFilter = Boolean(selectedType && selectedType !== 'all');
+  const isAdvanced = selectedGeneration !== null || selectedAbility !== null;
 
-  // --- Fontes de dados (cada uma só ativa no seu modo) ---
-  const listQuery = usePokemonListInfinite(!isSearching && !isTypeFilter);
-  const typeQuery = usePokemonByTypeInfinite(selectedType, isTypeFilter && !isSearching);
-  const indexQuery = usePokemonIndex(isSearching);
+  // Caminho "índice" cobre busca e/ou filtros avançados (combináveis com tipo).
+  const useIndexPath = isSearching || isAdvanced;
 
-  // Escolhe a query "ativa" para os flags de estado.
+  // --- Fontes de dados ---
+  const listQuery = usePokemonListInfinite(!useIndexPath && !isTypeFilter);
+  const typeQuery = usePokemonByTypeInfinite(selectedType, !useIndexPath && isTypeFilter);
+  const indexQuery = usePokemonIndex(useIndexPath);
+  const abilityRoster = useAbilityRosterIds(selectedAbility, Boolean(selectedAbility));
+  const typeRoster = useTypeRosterIds(selectedType, useIndexPath && isTypeFilter);
+
   const activeInfinite = isTypeFilter ? typeQuery : listQuery;
 
   // --- Dados exibidos ---
   const data = useMemo<SimplifiedPokemon[]>(() => {
+    if (!useIndexPath) {
+      return (activeInfinite.data?.pages.flat() ?? []) as SimplifiedPokemon[];
+    }
+
+    let entries = indexQuery.data ?? [];
+
+    if (isTypeFilter) {
+      const ids = new Set(typeRoster.data ?? []);
+      entries = entries.filter((p) => ids.has(p.id));
+    }
+    if (selectedAbility) {
+      const ids = new Set(abilityRoster.data ?? []);
+      entries = entries.filter((p) => ids.has(p.id));
+    }
+    if (selectedGeneration !== null) {
+      const gen = GENERATIONS.find((g) => g.id === selectedGeneration);
+      if (gen) entries = entries.filter((p) => p.id >= gen.range[0] && p.id <= gen.range[1]);
+    }
     if (isSearching) {
-      const source = indexQuery.data ?? [];
-      return source.filter(
+      entries = entries.filter(
         (p) => p.name.toLowerCase().includes(search) || p.id.toString().includes(search)
       );
     }
-    return (activeInfinite.data?.pages.flat() ?? []) as SimplifiedPokemon[];
-  }, [isSearching, indexQuery.data, activeInfinite.data, search]);
+    return entries;
+  }, [
+    useIndexPath,
+    activeInfinite.data,
+    indexQuery.data,
+    isTypeFilter,
+    typeRoster.data,
+    selectedAbility,
+    abilityRoster.data,
+    selectedGeneration,
+    isSearching,
+    search,
+  ]);
 
   // --- Flags de estado ---
-  const isLoading = isSearching ? indexQuery.isLoading : activeInfinite.isLoading;
-  const isRefreshing = isSearching ? indexQuery.isFetching : activeInfinite.isRefetching;
-  const isFetchingNextPage = isSearching ? false : activeInfinite.isFetchingNextPage;
-  const isFetched = isSearching ? indexQuery.isFetched : activeInfinite.isFetched;
-  const error = isSearching ? indexQuery.error : activeInfinite.error;
-  const hasReachedEnd = isSearching ? true : !activeInfinite.hasNextPage;
+  const indexLoading =
+    indexQuery.isLoading ||
+    (isTypeFilter && typeRoster.isLoading) ||
+    (Boolean(selectedAbility) && abilityRoster.isLoading);
+  const indexFetching =
+    indexQuery.isFetching || typeRoster.isFetching || abilityRoster.isFetching;
+
+  const isLoading = useIndexPath ? indexLoading : activeInfinite.isLoading;
+  const isRefreshing = useIndexPath ? indexFetching : activeInfinite.isRefetching;
+  const isFetchingNextPage = useIndexPath ? false : activeInfinite.isFetchingNextPage;
+  const isFetched = useIndexPath ? indexQuery.isFetched : activeInfinite.isFetched;
+  const error = useIndexPath
+    ? indexQuery.error || abilityRoster.error || typeRoster.error
+    : activeInfinite.error;
+  const hasReachedEnd = useIndexPath ? true : !activeInfinite.hasNextPage;
 
   // --- Ações ---
   const handleRefresh = () => {
-    if (isSearching) {
+    if (useIndexPath) {
       indexQuery.refetch();
+      if (selectedAbility) abilityRoster.refetch();
+      if (isTypeFilter) typeRoster.refetch();
     } else if (isTypeFilter) {
       typeQuery.refetch();
     } else {
@@ -64,11 +111,18 @@ export const usePokemonListState = () => {
   };
 
   const handleLoadMore = () => {
-    if (isSearching) return;
+    if (useIndexPath) return;
     if (activeInfinite.hasNextPage && !activeInfinite.isFetchingNextPage) {
       activeInfinite.fetchNextPage();
     }
   };
+
+  const clearAdvancedFilters = () => {
+    setSelectedGeneration(null);
+    setSelectedAbility(null);
+  };
+
+  const advancedCount = (selectedGeneration !== null ? 1 : 0) + (selectedAbility ? 1 : 0);
 
   return {
     // Estado
@@ -76,6 +130,10 @@ export const usePokemonListState = () => {
     setSearchTerm,
     selectedType,
     setSelectedType,
+    selectedGeneration,
+    setSelectedGeneration,
+    selectedAbility,
+    setSelectedAbility,
 
     // Dados
     data,
@@ -88,10 +146,14 @@ export const usePokemonListState = () => {
     // Ações
     handleRefresh,
     handleLoadMore,
+    clearAdvancedFilters,
 
     // Metadados
     isSearching,
     isTypeFilter,
+    isAdvanced,
+    isClientFiltered: useIndexPath,
     hasReachedEnd,
+    advancedCount,
   };
 };

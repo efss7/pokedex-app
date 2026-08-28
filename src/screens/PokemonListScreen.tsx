@@ -17,6 +17,7 @@ import { PokemonCardSkeleton } from '@components/pokemon/PokemonCardSkeleton';
 import { PokemonCard } from '@components/pokemon/PokemonCard';
 import { TypeFilter } from '@components/pokemon/TypeFilter';
 import { SearchBar } from '@components/pokemon/SearchBar';
+import { AdvancedFilters } from '@components/pokemon/AdvancedFilters';
 import { ListFooter } from '@components/pokemon/ListFooter';
 import { usePokemonListState } from '@hooks/usePokemonListState';
 import type { SimplifiedPokemon } from '@/types/pokemon';
@@ -102,6 +103,11 @@ export const PokemonListScreen = () => {
     setSearchTerm,
     selectedType,
     setSelectedType,
+    selectedGeneration,
+    setSelectedGeneration,
+    selectedAbility,
+    setSelectedAbility,
+    clearAdvancedFilters,
     data: filteredData,
     isLoading,
     isRefreshing,
@@ -112,8 +118,12 @@ export const PokemonListScreen = () => {
     handleLoadMore,
     isSearching,
     isTypeFilter,
+    isClientFiltered,
     hasReachedEnd,
+    advancedCount,
   } = usePokemonListState();
+
+  const [filtersOpen, setFiltersOpen] = React.useState(false);
 
   /**
    * Renderiza cada item da lista
@@ -149,8 +159,8 @@ export const PokemonListScreen = () => {
     // Não mostrar se tem dados na lista
     if (filteredData.length > 0) return null;
 
-    // Só mostrar se tem um filtro ativo (busca ou tipo)
-    const hasActiveFilter = searchTerm.trim() || isTypeFilter;
+    // Só mostrar se tem um filtro ativo (busca, tipo ou avançado)
+    const hasActiveFilter = searchTerm.trim() || isTypeFilter || advancedCount > 0;
     if (!hasActiveFilter) return null;
 
     return (
@@ -160,11 +170,9 @@ export const PokemonListScreen = () => {
           Nenhum pokémon encontrado
         </Text>
         <Text style={[styles.emptySubtext, { color: theme.colors.textSecondary }]}>
-          {searchTerm.trim() && isTypeFilter
-            ? `Nenhum pokémon do tipo "${selectedType}" corresponde a "${searchTerm}"`
-            : searchTerm.trim()
-            ? `Nenhum resultado para "${searchTerm}"`
-            : `Nenhum pokémon do tipo "${selectedType}"`}
+          {searchTerm.trim()
+            ? `Nenhum resultado para "${searchTerm}" com os filtros atuais`
+            : 'Nenhum pokémon corresponde aos filtros selecionados'}
         </Text>
       </View>
     );
@@ -194,11 +202,37 @@ export const PokemonListScreen = () => {
       {/* Barra de busca (componente isolado: não re-renderiza a lista) */}
       <SearchBar onChangeTerm={setSearchTerm} loading={isSearching && isLoading} />
 
-      {/* Filtro por tipo */}
-      <TypeFilter
-        selectedType={selectedType}
-        onSelectType={setSelectedType}
-      />
+      {/* Filtro por tipo + botão de filtros avançados */}
+      <View style={styles.filterRow}>
+        <View style={styles.typeFilterWrap}>
+          <TypeFilter selectedType={selectedType} onSelectType={setSelectedType} />
+        </View>
+        <TouchableOpacity
+          onPress={() => setFiltersOpen(true)}
+          style={[
+            styles.filterButton,
+            {
+              backgroundColor: advancedCount > 0 ? theme.colors.primary : theme.colors.surface,
+              borderColor: advancedCount > 0 ? theme.colors.primary : theme.colors.border,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Filtros avançados"
+        >
+          <Ionicons
+            name="options-outline"
+            size={20}
+            color={advancedCount > 0 ? '#FFFFFF' : theme.colors.text}
+          />
+          {advancedCount > 0 && (
+            <View style={[styles.filterBadge, { backgroundColor: '#FFFFFF' }]}>
+              <Text style={[styles.filterBadgeText, { color: theme.colors.primary }]}>
+                {advancedCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
 
       <FlatList<ListItem>
         data={isLoading && !filteredData.length ? Array.from({ length: 6 }, (_, i) => ({ id: `skeleton-${i}`, isLoading: true as const })) : filteredData}
@@ -220,10 +254,10 @@ export const PokemonListScreen = () => {
           />
         }
 
-        // Infinite scroll (desabilita durante busca)
-        onEndReached={isSearching ? undefined : handleLoadMore}
+        // Scroll infinito só no modo padrão/tipo (no modo filtrado tudo já vem do índice)
+        onEndReached={isClientFiltered ? undefined : handleLoadMore}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={isSearching ? null : renderFooter}
+        ListFooterComponent={isClientFiltered ? null : renderFooter}
 
         // Performance
         removeClippedSubviews={true}
@@ -231,6 +265,16 @@ export const PokemonListScreen = () => {
         updateCellsBatchingPeriod={50}
         initialNumToRender={10}
         windowSize={10}
+      />
+
+      <AdvancedFilters
+        visible={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        selectedGeneration={selectedGeneration}
+        onSelectGeneration={setSelectedGeneration}
+        selectedAbility={selectedAbility}
+        onSelectAbility={setSelectedAbility}
+        onClear={clearAdvancedFilters}
       />
     </View>
   );
@@ -244,6 +288,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 16,
+  },
+  typeFilterWrap: {
+    flex: 1,
+  },
+  filterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
   listContent: {
     padding: 16,

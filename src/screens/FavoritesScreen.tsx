@@ -28,6 +28,24 @@ export const FavoritesScreen = () => {
   );
   const [isSortOpen, setIsSortOpen] = React.useState(false);
 
+  // Botão de ranking no header (só faz sentido com favoritos)
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () =>
+        favorites.length > 0 ? (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Ranking')}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Ranking dos favoritos"
+            style={styles.rankingButton}
+          >
+            <Ionicons name="podium" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+        ) : undefined,
+    });
+  }, [navigation, favorites.length]);
+
   // Mapeia os favoritos a partir do índice em memória (sem N requests).
   // Os tipos são hidratados sob demanda pelo próprio card.
   const { data: index, isLoading, error, refetch, isFetching } = usePokemonIndex(
@@ -177,6 +195,9 @@ export const FavoritesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  rankingButton: {
+    paddingHorizontal: 16,
   },
   listContent: {
     padding: 16,

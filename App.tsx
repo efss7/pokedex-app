@@ -1,10 +1,10 @@
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { ThemeProvider } from '@theme/ThemeProvider';
 import { ErrorBoundary } from '@components/common/ErrorBoundary';
-import { queryClient } from '@services/queryClient';
+import { queryClient, asyncStoragePersister } from '@services/queryClient';
 import { AppNavigator } from '@navigation/AppNavigator';
 import { useAuthStore } from '@store/authStore';
 import { useFavoritesStore } from '@store/favoritesStore';
@@ -27,13 +27,25 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{
+            persister: asyncStoragePersister,
+            maxAge: 1000 * 60 * 60 * 24, // descarta o cache persistido após 24h
+            buster: 'v1', // troque para invalidar o cache antigo
+          }}
+          onSuccess={() => {
+            // [DEBUG] prova que o cache foi restaurado do disco no boot.
+            const count = queryClient.getQueryCache().getAll().length;
+            console.log(`[persist] cache restaurado do disco: ${count} queries`);
+          }}
+        >
           <ThemeProvider>
             <ErrorBoundary>
               <AppNavigator />
             </ErrorBoundary>
           </ThemeProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   decorativeContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
   },
   content: {

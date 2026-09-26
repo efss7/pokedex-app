@@ -49,6 +49,7 @@ src/
 ├── screens/        uma por rota da navegação
 ├── navigation/     stack, tipagem das rotas e deep linking
 ├── hooks/          queries, filtros e estado derivado
+├── constants/      cores por tipo, gerações e configuração da API
 ├── services/       PokeAPI, Supabase, notificações e o queryClient
 ├── store/          Zustand: favoritos, sessão, tema e preferências
 ├── theme/          tokens e provider light/dark
@@ -169,9 +170,26 @@ em `.github/workflows/deploy-web.yml`. As chaves do Supabase vêm dos secrets do
 repositório: o `.env` fica fora do controle de versão e não chega ao build.
 
 Distribuição em loja ficou de fora por decisão de custo — a App Store exige
-conta paga de desenvolvedor, sem alternativa gratuita. A configuração de build
-nativa (`eas.json`) está no repositório e gera APK Android pelo plano gratuito
-do EAS.
+conta paga de desenvolvedor, sem alternativa gratuita.
+
+Para gerar um APK Android, o `eas.json` já está configurado e o plano gratuito
+do EAS dá conta, sem precisar da conta do Google Play:
+
+```bash
+npx eas-cli login
+npx eas-cli init     # vincula o projeto e grava o id no app.json
+npx eas-cli build --profile preview --platform android
+```
+
+> **Antes do primeiro build**, registre as chaves no EAS. O `.env` é ignorado
+> pelo git e o EAS Build respeita o `.gitignore` — pelo mesmo motivo que o
+> workflow web usa secrets. Sem isso o APK sai com o login desativado, sem erro
+> visível:
+>
+> ```bash
+> npx eas-cli env:create --name EXPO_PUBLIC_SUPABASE_URL --value "<url>"
+> npx eas-cli env:create --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<chave>"
+> ```
 
 ## Limitações conhecidas
 

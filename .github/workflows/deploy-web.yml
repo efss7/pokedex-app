@@ -1,0 +1,80 @@
+name: Web (CI e deploy)
+
+# CI em todo PR; deploy só no push para a main.
+# Rodar também em PR é proposital: sem isso, a primeira execução real do
+# pipeline seria o próprio release, com a main já publicada.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Explícito, e com `engines` no package.json documentando o piso.
+          # O Node 20 está EOL e já não cobre o mínimo exigido por
+          # react-native 0.86 e metro (^20.19.4 || ^22.13.0 || ^24.3.0 || >=25).
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Os mesmos portões do pre-commit. Se o app não passa, não publica.
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --ci
+
+      # Secret ausente e secret com o nome errado produzem o mesmo resultado:
+      # string vazia, `isSupabaseConfigured` falso e deploy verde com login
+      # morto. O aviso separa "não configurei ainda" de "errei o nome".
+      - name: Conferir chaves do Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::warning title=Supabase não configurado::O site vai subir com o login desativado. Defina EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_ANON_KEY em Settings > Secrets > Actions."
+          fi
+
+      - name: Exportar web
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+        run: npx expo export --platform web
+
+      # O GitHub Pages serve arquivos estáticos e não conhece as rotas do app.
+      # Sem um 404.html igual ao index, recarregar em /pokedex-app/pokemon/25
+      # devolveria 404 em vez de carregar o app.
+      - name: Fallback de SPA
+        run: cp dist/index.html dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    # Só publica a partir da main: em PR o job acima já serve de portão.
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

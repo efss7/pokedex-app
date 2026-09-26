@@ -1,5 +1,6 @@
 import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { removeOldestQuery } from '@tanstack/query-persist-client-core';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 
@@ -37,4 +38,10 @@ export const queryClient = new QueryClient({
 export const asyncStoragePersister = createAsyncStoragePersister({
   storage: AsyncStorage,
   key: 'POKEDEX_QUERY_CACHE',
+  // No web o AsyncStorage é o localStorage, com ~5MB e o cache inteiro numa
+  // chave só. Um detalhe de pokémon pesa ~300KB, então algumas dezenas de
+  // telas estouram a cota. Sem `retry`, o erro era engolido e o cache parava
+  // de ser atualizado em silêncio: ao recarregar, voltava um snapshot velho.
+  // `removeOldestQuery` descarta a query mais antiga e tenta de novo.
+  retry: removeOldestQuery,
 });

@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
   TouchableOpacity,
   Animated as RNAnimated,
 } from 'react-native';
@@ -30,8 +30,6 @@ import type { PokemonType, PokemonAbility } from '@/types/pokemon';
 
 const AnimatedImage = Animated.createAnimatedComponent(ExpoImage);
 
-const { width } = Dimensions.get('window');
-
 type Props = NativeStackScreenProps<RootStackParamList, 'PokemonDetail'>;
 
 /**
@@ -48,12 +46,14 @@ type Props = NativeStackScreenProps<RootStackParamList, 'PokemonDetail'>;
 export const PokemonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { pokemonId } = route.params;
   const theme = useAppTheme();
+  const { width: larguraJanela } = useWindowDimensions();
+  // Teto de 320: num monitor largo, 60% da janela daria uma arte gigante.
+  const tamanhoArte = Math.min(larguraJanela * 0.6, 320);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const favorite = useFavoritesStore((state) => state.favorites.includes(pokemonId));
 
   const {
     data: details,
-    isLoading,
     isFetching,
     isPlaceholderData,
     error,
@@ -122,19 +122,23 @@ export const PokemonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   }, [details, navigation, pokemonId]);
 
-  // Loading (só no primeiro acesso; navegação anterior/próximo usa placeholder)
-  if (isLoading) {
-    return <PokemonDetailSkeleton />;
-  }
-
-  // Erro
-  if (error || !details) {
-    return (
+  // Sem dados ainda (primeiro acesso; navegação anterior/próximo usa placeholder).
+  //
+  // Checar `!details` antes de `error` importa: `isLoading` é `isPending &&
+  // isFetching`, então ele é FALSE no intervalo entre montar e a requisição
+  // começar — e também enquanto a query está pausada por falta de rede. Com a
+  // ordem anterior (`isLoading` e depois `error || !details`), esse intervalo
+  // caía no ramo de erro e piscava "Erro ao carregar pokémon" antes do pokémon
+  // aparecer. Sem dado e sem erro é carregamento, não falha.
+  if (!details) {
+    return error ? (
       <ErrorScreen
         title="Erro ao carregar pokémon"
-        message={error?.message || 'Não foi possível carregar os detalhes do pokémon'}
+        message={error.message || 'Não foi possível carregar os detalhes do pokémon'}
         onRetry={refetch}
       />
+    ) : (
+      <PokemonDetailSkeleton />
     );
   }
 
@@ -254,7 +258,12 @@ export const PokemonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         <View style={styles.headerContent}>
           <AnimatedImage
             source={imageUri}
-            style={[styles.image, imageScale, { opacity: isSwitching ? 0.4 : 1 }]}
+            style={[
+              styles.image,
+              { width: tamanhoArte, height: tamanhoArte },
+              imageScale,
+              { opacity: isSwitching ? 0.4 : 1 },
+            ]}
             contentFit="contain"
             cachePolicy="memory-disk"
           />
@@ -506,8 +515,8 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   image: {
-    width: width * 0.6,
-    height: width * 0.6,
+    // width/height vêm do componente (useWindowDimensions), com teto: num
+    // monitor largo, 60% da janela daria uma arte de centenas de pixels.
   },
   content: {
     padding: 20,

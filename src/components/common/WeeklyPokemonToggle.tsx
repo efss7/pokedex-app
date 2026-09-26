@@ -7,6 +7,7 @@ import {
   ensureNotificationPermission,
   scheduleWeeklyPokemon,
   cancelWeeklyPokemon,
+  isSuportado,
 } from '@services/notificationService';
 
 /**
@@ -21,6 +22,10 @@ export const WeeklyPokemonToggle = () => {
 
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  // Some no web: notificação local agendada não existe no browser, e um toggle
+  // que não faz nada é pior que toggle nenhum.
+  const oculto = !isSuportado;
 
   const handleToggle = async (next: boolean) => {
     setError(null);
@@ -42,6 +47,8 @@ export const WeeklyPokemonToggle = () => {
       setBusy(false);
     }
   };
+
+  if (oculto) return null;
 
   return (
     <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>

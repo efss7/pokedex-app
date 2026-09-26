@@ -10,6 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@theme/ThemeProvider';
+import { useGridLayout } from '@hooks/useGridLayout';
 import { PokemonCard } from '@components/pokemon/PokemonCard';
 import { useFavoritesStore } from '@store/favoritesStore';
 import { usePokemonIndex } from '@hooks/usePokemonIndex';
@@ -21,6 +22,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Favorites'>
 
 export const FavoritesScreen = () => {
   const theme = useAppTheme();
+  const { columns } = useGridLayout();
   const navigation = useNavigation<NavigationProp>();
   const favorites = useFavoritesStore((state) => state.favorites);
   const [sortOption, setSortOption] = React.useState<'id-asc' | 'id-desc' | 'name-asc' | 'name-desc'>(
@@ -128,7 +130,8 @@ export const FavoritesScreen = () => {
         data={sortedFavorites}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
-        numColumns={2}
+        key={columns}
+        numColumns={columns}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={

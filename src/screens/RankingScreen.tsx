@@ -222,14 +222,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 8,
+    // No web o content container do ScrollView horizontal tem altura definida
+    // e estica os filhos no eixo cruzado, deixando o texto do chip colado no
+    // topo. No nativo o container se dimensiona pelo conteúdo e a diferença não
+    // aparece. Centralizar aqui resolve os dois.
+    alignItems: 'center',
   },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
+    justifyContent: 'center',
   },
-  chipText: { fontSize: 14, fontWeight: '600' },
+  chipText: { fontSize: 14, fontWeight: '600', textAlign: 'center' },
   list: { padding: 16, paddingTop: 4 },
   row: {
     flexDirection: 'row',

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
   Animated,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -12,11 +11,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@theme/ThemeProvider';
 import { useFavoritesStore } from '@store/favoritesStore';
 import { usePokemonCardTypes } from '@hooks/usePokemonCardTypes';
+import { useGridLayout } from '@hooks/useGridLayout';
 import type { SimplifiedPokemon } from '@/types/pokemon';
 import { TYPE_COLORS } from '@constants';
-
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 2; // 2 colunas com padding
 
 interface PokemonCardProps {
   pokemon: SimplifiedPokemon;
@@ -60,6 +57,7 @@ const PokemonCardComponent: React.FC<PokemonCardProps> = ({ pokemon, onPress }) 
     }).start();
   };
 
+  const { cardWidth } = useGridLayout();
   const primaryTypeColor = TYPE_COLORS[types[0]] || theme.colors.primary;
   const formattedId = `#${pokemon.id.toString().padStart(3, '0')}`;
 
@@ -76,6 +74,7 @@ const PokemonCardComponent: React.FC<PokemonCardProps> = ({ pokemon, onPress }) 
       <Animated.View
         style={[
           styles.card,
+          { width: cardWidth, height: cardWidth * 1.3 },
           { backgroundColor: theme.colors.surface },
           { transform: [{ scale: scaleAnim }] },
         ]}
@@ -101,7 +100,7 @@ const PokemonCardComponent: React.FC<PokemonCardProps> = ({ pokemon, onPress }) 
         {/* Imagem do Pokémon (cache em disco + fade-in) */}
         <Image
           source={pokemon.imageUrl}
-          style={styles.image}
+          style={[styles.image, { height: cardWidth * 0.6 }]}
           contentFit="contain"
           transition={250}
           cachePolicy="memory-disk"
@@ -155,8 +154,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    width: CARD_WIDTH,
-    height: CARD_WIDTH * 1.3, // Proporção 1:1.3
+    // width/height vêm do useGridLayout (proporção 1:1.3), porque dependem da
+    // largura da janela, que no navegador muda em tempo real.
     borderRadius: 16,
     padding: 12,
     marginBottom: 16,
@@ -195,7 +194,6 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: CARD_WIDTH * 0.6,
     marginVertical: 8,
   },
   name: {

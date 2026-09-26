@@ -134,12 +134,42 @@ describe('syncWithCloud', () => {
     expect(useFavoritesStore.getState().favorites).toEqual([]);
   });
 
+  // Contraprova das duas regressões acima: elas só afirmam o estado negativo
+  // (lista vazia), que é o mesmo que `clearFavorites()` já deixou. Sozinhas,
+  // não distinguem "a guarda comparou a coisa certa" de "a guarda disparou por
+  // engano" — trocar a comparação de id por identidade de objeto passaria nas
+  // duas, e no app descartaria o merge a cada refresh de token do Supabase.
+  it('grava o merge quando o Supabase emite um novo objeto de user com o mesmo id', async () => {
+    login(USER_A);
+    useFavoritesStore.setState({ favorites: [1] });
+
+    const remote = deferred<number[]>();
+    (getRemoteFavoriteIds as jest.Mock).mockReturnValue(remote.promise);
+
+    const syncing = useFavoritesStore.getState().syncWithCloud();
+
+    // Mesma conta, objeto novo — é o que o onAuthStateChange entrega num
+    // TOKEN_REFRESHED.
+    login({ ...USER_A });
+
+    remote.resolve([2]);
+    await syncing;
+
+    expect(useFavoritesStore.getState().favorites).toEqual([1, 2]);
+  });
+
   it('não deixa a flag syncing presa quando a nuvem falha', async () => {
     login(USER_A);
     (getRemoteFavoriteIds as jest.Mock).mockRejectedValue(new Error('offline'));
 
+    // O store loga esse caminho de propósito. Silenciado aqui, e só aqui — um
+    // filtro global esconderia o mesmo aviso nos outros testes deste arquivo.
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
     await useFavoritesStore.getState().syncWithCloud();
 
     expect(useFavoritesStore.getState().syncing).toBe(false);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

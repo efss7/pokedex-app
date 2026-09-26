@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-
 // Módulos nativos que não existem no ambiente do Jest. Os mocks de
 // AsyncStorage e NetInfo são os oficiais, publicados pelas próprias libs.
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -28,7 +26,9 @@ jest.mock('expo-notifications', () => ({
 }));
 
 jest.mock('expo-linking', () => ({
-  createURL: (path) => `mydex://${String(path).replace(/^\//, '')}`,
+  // jest.fn para os testes poderem assertar a CHAMADA — cravar o scheme no
+  // fonte produziria a mesma string de saída e passaria despercebido.
+  createURL: jest.fn((path) => `mydex://${String(path).replace(/^\//, '')}`),
   getInitialURL: jest.fn(async () => null),
   addEventListener: jest.fn(() => ({ remove: jest.fn() })),
 }));
@@ -58,24 +58,27 @@ jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
 }));
 
-// O queryClient do app tem `retry: 2`. Em teste isso faz cada caminho de erro
-// esperar o backoff (segundos) e ainda deixa timers vivos, impedindo o Jest de
-// encerrar. Aqui o comportamento de retry não é o que está sob teste.
+// Desliga só o retry: com o `retry: 2` do app, cada caminho de erro espera o
+// backoff (segundos) e ainda deixa timers vivos, impedindo o Jest de encerrar.
+// `setDefaultOptions` SUBSTITUI o objeto inteiro, então o resto da config de
+// produção (staleTime, gcTime de 24h do offline-first, refetchOnWindowFocus)
+// precisa ser repassado à mão — senão os testes rodam contra uma configuração
+// que não é a do app.
 const { queryClient } = require('./src/services/queryClient');
-queryClient.setDefaultOptions({ queries: { retry: false, gcTime: 0 } });
+const defaultsDoApp = queryClient.getDefaultOptions();
+
+queryClient.setDefaultOptions({
+  ...defaultsDoApp,
+  queries: { ...defaultsDoApp.queries, retry: false },
+});
 
 afterEach(() => {
   queryClient.clear();
 });
 
-// Avisos esperados em teste (caminhos de erro que o código loga de propósito,
-// e o act() das animações de entrada). O resto passa normalmente, senão um
-// aviso legítimo de regressão passaria despercebido.
-const AVISOS_ESPERADOS = ['not wrapped in act', 'favorites: sync com a nuvem falhou'];
-const warnOriginal = console.warn;
-
-jest.spyOn(console, 'warn').mockImplementation((...args) => {
-  const texto = String(args[0] ?? '');
-  if (AVISOS_ESPERADOS.some((esperado) => texto.includes(esperado))) return;
-  warnOriginal(...args);
-});
+// Nada de filtro global de console aqui. A versão anterior silenciava
+// `favorites: sync com a nuvem falhou` em TODA a suíte — inclusive dentro do
+// teste desse módulo —, então uma regressão que fizesse todo sync lançar
+// deixava a suíte verde e muda. Quem espera um aviso silencia localmente.
+// (O aviso de act() do React também não passa por aqui: ele sai por
+// console.error, não console.warn.)

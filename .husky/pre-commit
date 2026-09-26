@@ -1,8 +1,6 @@
 #!/bin/sh
 
-# Lint só nos arquivos staged (com --fix); o resto roda no projeto inteiro
-# porque um erro de tipo ou um teste quebrado raramente fica contido no
-# arquivo que foi mexido. A suíte roda em menos de um segundo.
-npx lint-staged || exit 1
-npm run typecheck || exit 1
-npm test -- --silent || exit 1
+# Só o lint-staged: ele guarda as mudanças não staged, então lint, typecheck e
+# testes enxergam exatamente o snapshot que vai ser commitado. As tarefas estão
+# em lint-staged.config.js.
+npx lint-staged

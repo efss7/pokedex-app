@@ -10,29 +10,31 @@ module.exports = defineConfig([
   {
     rules: {
       /**
-       * Regras novas do React Compiler, rebaixadas a aviso em vez de erro para
-       * o lint poder entrar no pre-commit sem exigir um refactor amplo antes.
-       * Seguem visíveis de propósito — são dívida anotada, não decisão final.
+       * Desligada, não rebaixada a aviso: um aviso permanente é ruído que
+       * ninguém lê, e mascara violações novas.
        *
-       * react-hooks/refs: dispara em `useRef(new Animated.Value(0)).current`,
-       * que é o idioma documentado do React Native para valores animados (29
-       * ocorrências). O valor é estável e não participa da render, então aqui
-       * é ruído da regra, não bug.
-       *
-       * react-hooks/static-components: componentes declarados dentro de outro
-       * componente (os `Block` dos skeletons). É crítica legítima — remontam o
-       * subtree a cada render do pai —, mas sem impacto visível em skeletons.
-       * Vale extrair quando esses componentes forem mexidos.
+       * A regra dispara em `useRef(new Animated.Value(0)).current`, o idioma
+       * documentado do React Native para valores animados (29 ocorrências em
+       * 6 arquivos). O objeto é estável e não participa da render — ler
+       * `.current` ali não causa o bug que a regra existe para pegar. Se um
+       * dia a Animated API do RN mudar, vale reavaliar.
        */
-      'react-hooks/refs': 'warn',
-      'react-hooks/static-components': 'warn',
+      'react-hooks/refs': 'off',
     },
   },
   {
-    // Os arquivos de teste e a config do Jest rodam em Node, com globais do Jest.
-    files: ['**/*.test.{ts,tsx}', 'jest.setup.js', 'jest.config.js', 'src/test-utils.tsx'],
+    // O setup do Jest é CommonJS e roda em Node, com os globais do Jest.
+    files: ['jest.setup.js', 'jest.config.js', 'lint-staged.config.js'],
     languageOptions: {
-      globals: { jest: 'readonly', __DEV__: 'readonly' },
+      sourceType: 'commonjs',
+      globals: {
+        jest: 'readonly',
+        afterEach: 'readonly',
+        beforeEach: 'readonly',
+        require: 'readonly',
+        module: 'writable',
+        console: 'readonly',
+      },
     },
   },
 ]);

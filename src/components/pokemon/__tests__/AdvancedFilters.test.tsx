@@ -1,5 +1,5 @@
 import React from 'react';
-import { renderComProviders, screen, userEvent } from '../../../test-utils';
+import { renderComProviders, screen, userEvent } from '@test/test-utils';
 import { AdvancedFilters } from '@components/pokemon/AdvancedFilters';
 import { useAbilityNames } from '@hooks/useFilterData';
 
@@ -30,6 +30,19 @@ describe('AdvancedFilters', () => {
 
     expect(screen.getByText('flash fire')).toBeOnTheScreen();
     expect(screen.getByText('thick fat')).toBeOnTheScreen();
+  });
+
+  // O mock de useFilterData apaga a ligação com os dados, então o argumento
+  // `enabled` é a única parte dessa ligação que ainda dá para verificar aqui:
+  // passar `false` deixaria a lista permanentemente vazia no app.
+  it('habilita a busca de habilidades quando o modal está visível', async () => {
+    await renderComProviders(<AdvancedFilters {...props} />);
+    expect(useAbilityNames).toHaveBeenCalledWith(true);
+  });
+
+  it('não busca habilidades com o modal fechado', async () => {
+    await renderComProviders(<AdvancedFilters {...props} visible={false} />);
+    expect(useAbilityNames).toHaveBeenCalledWith(false);
   });
 
   // Regressão: a busca comparava com o slug ("flash-fire") enquanto a lista

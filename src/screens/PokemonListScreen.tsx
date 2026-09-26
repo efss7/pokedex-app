@@ -20,6 +20,7 @@ import { SearchBar } from '@components/pokemon/SearchBar';
 import { AdvancedFilters } from '@components/pokemon/AdvancedFilters';
 import { ListFooter } from '@components/pokemon/ListFooter';
 import { usePokemonListState } from '@hooks/usePokemonListState';
+import { useIsOnline } from '@hooks/useIsOnline';
 import type { SimplifiedPokemon } from '@/types/pokemon';
 import type { RootStackParamList } from '@navigation/AppNavigator';
 
@@ -124,6 +125,7 @@ export const PokemonListScreen = () => {
   } = usePokemonListState();
 
   const [filtersOpen, setFiltersOpen] = React.useState(false);
+  const isOnline = useIsOnline();
 
   /**
    * Renderiza cada item da lista
@@ -177,6 +179,28 @@ export const PokemonListScreen = () => {
       </View>
     );
   };
+
+  /**
+   * Sem rede e sem nada em cache: a query fica pausada (nem loading, nem erro),
+   * então a lista ficaria vazia e muda. Explica o que houve.
+   */
+  if (!isOnline && !isLoading && filteredData.length === 0) {
+    return (
+      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background }]}>
+        <Ionicons
+          name="cloud-offline-outline"
+          size={44}
+          color={theme.colors.textSecondary}
+          style={styles.emptyIcon}
+        />
+        <Text style={[styles.emptyText, { color: theme.colors.text }]}>Você está offline</Text>
+        <Text style={[styles.emptySubtext, { color: theme.colors.textSecondary }]}>
+          Conecte-se à internet para carregar a Pokédex. O que você já visitou fica
+          disponível offline.
+        </Text>
+      </View>
+    );
+  }
 
   /**
    * Renderiza mensagem de erro

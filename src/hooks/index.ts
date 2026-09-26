@@ -12,3 +12,4 @@ export { usePokemonCardTypes } from './usePokemonCardTypes';
 export { useTypeEffectiveness } from './useTypeEffectiveness';
 export { usePokemonListState } from './usePokemonListState';
 export { useAnimatedEntrance, useScaleBounce } from './useAnimations';
+export { useIsOnline } from './useIsOnline';

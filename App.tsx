@@ -11,10 +11,17 @@ import { useFavoritesStore } from '@store/favoritesStore';
 
 export default function App() {
   React.useEffect(() => {
-    // Ao logar (loading/deslogado → autenticado), mescla os favoritos com a nuvem.
     const unsubscribe = useAuthStore.subscribe((state, prev) => {
+      // Ao logar (loading/deslogado → autenticado), mescla os favoritos com a nuvem.
       if (state.status === 'authenticated' && prev.status !== 'authenticated') {
         void useFavoritesStore.getState().syncWithCloud();
+      }
+
+      // Ao sair, descarta a lista local — ela é da conta que saiu e já está na
+      // nuvem. Sem isso, o próximo usuário a logar neste aparelho mesclaria os
+      // favoritos do anterior e os enviaria para a conta dele.
+      if (prev.status === 'authenticated' && state.status === 'unauthenticated') {
+        useFavoritesStore.getState().clearFavorites();
       }
     });
 
@@ -33,11 +40,6 @@ export default function App() {
             persister: asyncStoragePersister,
             maxAge: 1000 * 60 * 60 * 24, // descarta o cache persistido após 24h
             buster: 'v1', // troque para invalidar o cache antigo
-          }}
-          onSuccess={() => {
-            // [DEBUG] prova que o cache foi restaurado do disco no boot.
-            const count = queryClient.getQueryCache().getAll().length;
-            console.log(`[persist] cache restaurado do disco: ${count} queries`);
           }}
         >
           <ThemeProvider>

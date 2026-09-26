@@ -1,6 +1,20 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+
+/**
+ * No React Native o TanStack Query não detecta conectividade sozinho (ele
+ * depende de eventos `online`/`offline` do browser, que não existem aqui).
+ * Sem isto ele se considera sempre online: offline as queries disparam, gastam
+ * os retries e falham, em vez de pausar e servir o cache na hora. Ligando o
+ * NetInfo, elas ficam `paused` sem rede e refazem sozinhas quando ela volta.
+ */
+onlineManager.setEventListener((setOnline) =>
+  NetInfo.addEventListener((state) => {
+    setOnline(Boolean(state.isConnected));
+  })
+);
 
 export const queryClient = new QueryClient({
   defaultOptions: {

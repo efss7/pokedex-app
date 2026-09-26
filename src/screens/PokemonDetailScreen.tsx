@@ -94,14 +94,30 @@ export const PokemonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const evolutionAnimation = useAnimatedEntrance(380);
   const extraAnimation = useAnimatedEntrance(430);
 
-  // Configurar título da tela
+  // Configurar título da tela + botão de comparar
   React.useEffect(() => {
     if (details) {
       navigation.setOptions({
         title: details.pokemon.name.charAt(0).toUpperCase() + details.pokemon.name.slice(1),
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Comparison', { aId: pokemonId })}
+            accessibilityRole="button"
+            accessibilityLabel="Comparar com outro pokémon"
+          >
+            {/* width + textAlign centram o glifo dentro da sua caixa de texto
+                (o Ionicons é um <Text> e o glifo tende a encostar à esquerda). */}
+            <Ionicons
+              name="swap-horizontal"
+              size={24}
+              color="#FFFFFF"
+              style={styles.headerIcon}
+            />
+          </TouchableOpacity>
+        ),
       });
     }
-  }, [details, navigation]);
+  }, [details, navigation, pokemonId]);
 
   // Loading (só no primeiro acesso; navegação anterior/próximo usa placeholder)
   if (isLoading) {
@@ -415,6 +431,10 @@ export const PokemonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerIcon: {
+    width: 50,
+    textAlign: 'center',
   },
   contentContainer: {
     paddingBottom: 40,

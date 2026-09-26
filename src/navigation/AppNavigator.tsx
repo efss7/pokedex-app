@@ -10,12 +10,19 @@ import { PokemonListScreen } from '@screens/PokemonListScreen';
 import { PokemonDetailScreen } from '@screens/PokemonDetailScreen';
 import { FavoritesScreen } from '@screens/FavoritesScreen';
 import { AccountScreen } from '@screens/AccountScreen';
+import { ComparisonScreen } from '@screens/ComparisonScreen';
+import { RankingScreen } from '@screens/RankingScreen';
 import { useAppTheme } from '@theme/ThemeProvider';
+import { linking } from './linking';
 
 export type RootStackParamList = {
   PokemonList: undefined;
   Favorites: undefined;
   Account: undefined;
+  Ranking: undefined;
+  Comparison: {
+    aId?: number;
+  };
   PokemonDetail: {
     pokemonId: number;
   };
@@ -40,7 +47,7 @@ export const AppNavigator = () => {
   };
 
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer theme={navigationTheme} linking={linking}>
       <StatusBar style="light" />
       <Stack.Navigator
         screenOptions={{
@@ -67,6 +74,16 @@ export const AppNavigator = () => {
           name="Account"
           component={AccountScreen}
           options={{ title: 'Conta' }}
+        />
+        <Stack.Screen
+          name="Comparison"
+          component={ComparisonScreen}
+          options={{ title: 'Comparar' }}
+        />
+        <Stack.Screen
+          name="Ranking"
+          component={RankingScreen}
+          options={{ title: 'Ranking dos Favoritos' }}
         />
         <Stack.Screen 
           name="PokemonDetail" 

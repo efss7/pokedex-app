@@ -112,6 +112,11 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
       const onlyLocal = merged.filter((id) => !remote.includes(id));
       await addRemoteFavorites(user.id, onlyLocal);
 
+      // O usuário pode ter saído (ou trocado de conta) durante as chamadas
+      // acima. Nesse caso o logout já descartou a lista local de propósito, e
+      // gravar `merged` devolveria os favoritos da conta anterior ao aparelho.
+      if (currentUser()?.id !== user.id) return;
+
       void storageHelpers.setObject(storageKeys.FAVORITES, merged);
       set({ favorites: merged });
     } catch (e) {

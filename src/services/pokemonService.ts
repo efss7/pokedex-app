@@ -94,6 +94,46 @@ export const getTypeDamageRelations = async (
 };
 
 /**
+ * Retorna os IDs dos pokémons que possuem uma habilidade (endpoint /ability).
+ * Filtra formas alternativas (id > MAX_POKEMON_ID).
+ */
+export const getPokemonIdsByAbility = async (ability: string): Promise<number[]> => {
+  const response = await pokemonApi.get<{
+    pokemon: { pokemon: { name: string; url: string } }[];
+  }>(`/ability/${ability}`);
+  return response.data.pokemon
+    .map((entry) => getPokemonIdFromUrl(entry.pokemon.url))
+    .filter((id) => id <= MAX_POKEMON_ID);
+};
+
+/**
+ * Lista os nomes das habilidades para o seletor do filtro.
+ *
+ * Ignora as habilidades "especiais/não usadas" (id > 10000), que não estão em
+ * nenhum pokémon da dex normal e deixariam o filtro sem resultados.
+ */
+export const getAbilityNames = async (): Promise<string[]> => {
+  const response = await pokemonApi.get<{ results: { name: string; url: string }[] }>(
+    '/ability?limit=1000'
+  );
+  return response.data.results
+    .filter((a) => getPokemonIdFromUrl(a.url) <= 10000)
+    .map((a) => a.name)
+    .sort();
+};
+
+/**
+ * Retorna os IDs dos pokémons de um tipo (endpoint /type).
+ * Filtra formas alternativas (id > MAX_POKEMON_ID).
+ */
+export const getPokemonIdsByType = async (type: string): Promise<number[]> => {
+  const response = await getPokemonByType(type);
+  return response.pokemon
+    .map((entry) => getPokemonIdFromUrl(entry.pokemon.url))
+    .filter((id) => id <= MAX_POKEMON_ID);
+};
+
+/**
  * Extrai o ID do pokémon a partir da URL da PokeAPI
  * Exemplo: "https://pokeapi.co/api/v2/pokemon/1/" -> 1
  * @param url - URL retornada pela API

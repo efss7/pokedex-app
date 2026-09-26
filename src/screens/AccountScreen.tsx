@@ -15,6 +15,7 @@ import { useAppTheme } from '@theme/ThemeProvider';
 import { useAuthStore } from '@store/authStore';
 import { isSupabaseConfigured } from '@services/supabase';
 import { signInWithEmail, signUpWithEmail } from '@services/authService';
+import { WeeklyPokemonToggle } from '@components/common/WeeklyPokemonToggle';
 
 type Pending = 'email' | 'signout' | null;
 
@@ -130,6 +131,8 @@ export const AccountScreen = () => {
             </>
           )}
         </TouchableOpacity>
+
+        <WeeklyPokemonToggle />
       </View>
     );
   }
@@ -228,6 +231,8 @@ export const AccountScreen = () => {
         {error ? (
           <Text style={[styles.error, { color: theme.colors.error }]}>{error}</Text>
         ) : null}
+
+        <WeeklyPokemonToggle />
       </ScrollView>
     </KeyboardAvoidingView>
   );

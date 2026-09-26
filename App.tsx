@@ -8,6 +8,8 @@ import { queryClient, asyncStoragePersister } from '@services/queryClient';
 import { AppNavigator } from '@navigation/AppNavigator';
 import { useAuthStore } from '@store/authStore';
 import { useFavoritesStore } from '@store/favoritesStore';
+import { useWeeklyPokemonStore } from '@store/weeklyPokemonStore';
+import { refreshWeeklyPokemon } from '@services/notificationService';
 
 export default function App() {
   React.useEffect(() => {
@@ -28,7 +30,26 @@ export default function App() {
     // Restaura a sessão salva e passa a ouvir mudanças de autenticação.
     useAuthStore.getState().initialize();
 
-    return unsubscribe;
+    // A fila da notificação semanal é finita (8 semanas): recompõe quando vai
+    // secando. O store é persistido e hidrata de forma assíncrona, então não dá
+    // para ler `enabled` de imediato.
+    const refreshWeekly = () => {
+      if (!useWeeklyPokemonStore.getState().enabled) return;
+      // Sem rede no boot não tem o que fazer — tenta de novo na próxima abertura.
+      void refreshWeeklyPokemon().catch(() => {});
+    };
+
+    let unsubscribeHydration: (() => void) | undefined;
+    if (useWeeklyPokemonStore.persist.hasHydrated()) {
+      refreshWeekly();
+    } else {
+      unsubscribeHydration = useWeeklyPokemonStore.persist.onFinishHydration(refreshWeekly);
+    }
+
+    return () => {
+      unsubscribe();
+      unsubscribeHydration?.();
+    };
   }, []);
 
   return (

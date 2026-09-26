@@ -1,6 +1,13 @@
 import * as Linking from 'expo-linking';
+import * as Notifications from 'expo-notifications';
 import type { LinkingOptions } from '@react-navigation/native';
 import type { RootStackParamList } from './AppNavigator';
+
+/** A notificação "Pokémon da semana" carrega o deep link em `data.url`. */
+const urlFromNotification = (response: Notifications.NotificationResponse | null) => {
+  const url = response?.notification.request.content.data?.url;
+  return typeof url === 'string' ? url : null;
+};
 
 /**
  * Configuração de deep linking.
@@ -17,6 +24,28 @@ import type { RootStackParamList } from './AppNavigator';
  */
 export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [Linking.createURL('/'), 'mydex://'],
+
+  // App aberto pelo toque numa notificação (estava fechado).
+  async getInitialURL() {
+    return (await Linking.getInitialURL()) ?? urlFromNotification(Notifications.getLastNotificationResponse());
+  },
+
+  // App já aberto: reage tanto a deep links quanto ao toque em notificações.
+  subscribe(listener) {
+    const linkSubscription = Linking.addEventListener('url', ({ url }) => listener(url));
+    const notificationSubscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const url = urlFromNotification(response);
+        if (url) listener(url);
+      }
+    );
+
+    return () => {
+      linkSubscription.remove();
+      notificationSubscription.remove();
+    };
+  },
+
   config: {
     initialRouteName: 'PokemonList',
     screens: {

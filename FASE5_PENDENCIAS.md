@@ -32,13 +32,37 @@ Este documento existe para não perder o contexto (ex.: após formatar a máquin
   offline" na lista (sem isso, offline e sem cache a lista ficava em branco e muda).
 - **Log de debug `[persist]` removido** do `App.tsx`.
 
+## ✅ Feito (Parte 2 — notificação "Pokémon da semana")
+Fecha a Fase 5. Notificação **local** (sem push, sem dev build).
+- `src/services/notificationService.ts` — permissão, agendamento e cancelamento
+- `src/store/weeklyPokemonStore.ts` — preferência (on/off) persistida
+- `src/components/common/WeeklyPokemonToggle.tsx` — toggle, nas duas branches
+  da tela de Conta (logado e deslogado)
+- `src/navigation/linking.ts` — tocar na notificação abre o pokémon dela,
+  reaproveitando o deep linking da Parte 1
+
+**Por que 8 notificações avulsas e não uma repetindo:** um trigger `WEEKLY`
+repete o *mesmo* conteúdo, ou seja, o mesmo pokémon para sempre. Então agendamos
+8 ocorrências com trigger `DATE` (segundas, 9h), cada uma com o seu sorteio, e
+a fila é recomposta no boot quando sobram menos de 2 (`refreshWeeklyPokemon`).
+
+**Detalhe do Expo Go:** a URL da notificação é gerada com `Linking.createURL`,
+não com `mydex://` cravado — no Expo Go o scheme do app não está registrado e
+quem vale é o `exp://`. Assim o toque funciona nos dois ambientes.
+
 ## ❌ Pendente (Parte 2 — fazer depois)
-1. **Notificação "Pokémon da semana"** — única feature que falta.
-   É uma notificação **local semanal** → roda no Expo Go (sem push/dev build).
-   Usar `expo-notifications` (agendar notificação semanal com um pokémon aleatório).
-2. **Validar o offline no aparelho** — ver a seção "Como validar" abaixo.
-   As correções passaram por typecheck/build, mas não foram testadas rodando.
-3. **Commitar a Parte 2** e abrir o PR `feature/fase-5-avancado` → `develop`.
+1. **Commitar a Parte 2** e abrir o PR `feature/fase-5-avancado` → `develop`.
+
+## 🧪 Validar depois da publicação (Fase 7)
+Decisão consciente: seguir sem testar agora. As correções passaram por typecheck
+e build, mas **não foram exercitadas rodando**. Os cenários estão escritos na
+seção "Como validar" no fim deste arquivo — rodar todos quando houver build
+publicada (dev build ou TestFlight), onde não existem as limitações do Expo Go.
+- Persistência do cache entre reinícios
+- Offline com cache (dados continuam aparecendo)
+- Offline sem cache (tela "Você está offline")
+- Favoritos não vazam entre contas no logout
+- Notificação "Pokémon da semana" dispara e abre o pokémon certo
 
 ## ⛔ Fora de escopo (limitação da PokeAPI — problema N+1)
 - **Filtro por STATS** na dex inteira: exigiria os stats de ~1025 pokémons

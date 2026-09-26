@@ -6,7 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppTheme } from '@theme/ThemeProvider';
 import type { EvolutionChain as EvolutionChainType } from '@/types/pokemon';
 import type { RootStackParamList } from '@navigation/AppNavigator';
-import { parseEvolutionChain, SimplifiedEvolution } from '@utils/evolutionHelper';
+import { parseEvolutionChain } from '@utils/evolutionHelper';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 

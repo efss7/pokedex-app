@@ -20,6 +20,7 @@ module.exports = function (api) {
             '@types': './src/types',
             '@theme': './src/theme',
             '@constants': './src/constants',
+            '@test': './test',
           },
         },
       ],

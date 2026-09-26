@@ -36,11 +36,15 @@ export const ComparisonScreen: React.FC<Props> = ({ route }) => {
 
   // `navigate` para uma instância que já está na stack atualiza os params sem
   // remontar a tela, e aí o valor inicial do useState acima seria ignorado —
-  // o botão ⇄ pareceria não fazer nada.
+  // o botão ⇄ pareceria não fazer nada. Ajuste durante a render (padrão do
+  // React para "state derivado de prop") em vez de efeito: evita o render
+  // extra e o piscar do slot antigo.
   const aId = route.params?.aId;
-  React.useEffect(() => {
+  const [aIdAnterior, setAIdAnterior] = React.useState(aId);
+  if (aId !== aIdAnterior) {
+    setAIdAnterior(aId);
     if (aId != null) setSlotA(aId);
-  }, [aId]);
+  }
 
   const a = usePokemonBasic(slotA ?? undefined);
   const b = usePokemonBasic(slotB ?? undefined);

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Só o lint-staged: ele guarda as mudanças não staged, então lint, typecheck e
+# testes enxergam exatamente o snapshot que vai ser commitado. As tarefas estão
+# em lint-staged.config.js.
+npx lint-staged

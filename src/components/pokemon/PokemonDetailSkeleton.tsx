@@ -5,6 +5,21 @@ import { useAppTheme } from '@theme/ThemeProvider';
 const { width } = Dimensions.get('window');
 
 /**
+ * Bloco cinza pulsante. Fica no escopo do módulo, e não dentro do skeleton:
+ * um componente declarado dentro de outro é recriado a cada render do pai,
+ * o que remonta o subtree inteiro e reinicia a animação.
+ */
+const Block = ({
+  style,
+  color,
+  opacity,
+}: {
+  style: object;
+  color: string;
+  opacity: Animated.Value;
+}) => <Animated.View style={[{ backgroundColor: color, opacity }, style]} />;
+
+/**
  * Skeleton da tela de detalhes.
  * Reproduz o layout (header + imagem, título, tipos, seções) enquanto os
  * dados carregam, dando sensação de velocidade em vez de um spinner vazio.
@@ -22,45 +37,39 @@ export const PokemonDetailSkeleton = () => {
     ).start();
   }, [pulse]);
 
-  const Block = ({ style }: { style: object }) => (
-    <Animated.View
-      style={[{ backgroundColor: theme.colors.border, opacity: pulse }, style]}
-    />
-  );
-
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header com imagem */}
       <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
-        <Block style={styles.image} />
+        <Block color={theme.colors.border} opacity={pulse} style={styles.image} />
       </View>
 
       {/* Conteúdo */}
       <View style={styles.content}>
-        <Block style={styles.id} />
-        <Block style={styles.name} />
-        <Block style={styles.genus} />
+        <Block color={theme.colors.border} opacity={pulse} style={styles.id} />
+        <Block color={theme.colors.border} opacity={pulse} style={styles.name} />
+        <Block color={theme.colors.border} opacity={pulse} style={styles.genus} />
 
         <View style={styles.types}>
-          <Block style={styles.typeChip} />
-          <Block style={styles.typeChip} />
+          <Block color={theme.colors.border} opacity={pulse} style={styles.typeChip} />
+          <Block color={theme.colors.border} opacity={pulse} style={styles.typeChip} />
         </View>
 
-        <Block style={styles.sectionTitle} />
-        <Block style={styles.line} />
-        <Block style={styles.line} />
-        <Block style={[styles.line, { width: '60%' }]} />
+        <Block color={theme.colors.border} opacity={pulse} style={styles.sectionTitle} />
+        <Block color={theme.colors.border} opacity={pulse} style={styles.line} />
+        <Block color={theme.colors.border} opacity={pulse} style={styles.line} />
+        <Block color={theme.colors.border} opacity={pulse} style={[styles.line, { width: '60%' }]} />
 
         <View style={styles.infoGrid}>
-          <Block style={styles.infoItem} />
-          <Block style={styles.infoItem} />
-          <Block style={styles.infoItem} />
+          <Block color={theme.colors.border} opacity={pulse} style={styles.infoItem} />
+          <Block color={theme.colors.border} opacity={pulse} style={styles.infoItem} />
+          <Block color={theme.colors.border} opacity={pulse} style={styles.infoItem} />
         </View>
 
-        <Block style={styles.sectionTitle} />
+        <Block color={theme.colors.border} opacity={pulse} style={styles.sectionTitle} />
         <View style={styles.types}>
-          <Block style={styles.pill} />
-          <Block style={styles.pill} />
+          <Block color={theme.colors.border} opacity={pulse} style={styles.pill} />
+          <Block color={theme.colors.border} opacity={pulse} style={styles.pill} />
         </View>
       </View>
     </View>

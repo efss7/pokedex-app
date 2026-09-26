@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const { width, height } = Dimensions.get('window');
 
 interface ThemedBackgroundProps {
   color: string;

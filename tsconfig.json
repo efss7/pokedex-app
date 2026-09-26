@@ -3,6 +3,10 @@
   "compilerOptions": {
     "ignoreDeprecations": "6.0",
     "strict": true,
+    // Globais do Jest (describe/it/expect) nos arquivos de teste. Só afeta
+    // inclusão de tipos GLOBAIS — os tipos de imports (react etc.) seguem
+    // resolvendo normalmente pelo módulo.
+    "types": ["jest"],
     "esModuleInterop": true,
     "jsx": "react-native",
     "skipLibCheck": true,

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Lint só nos arquivos staged (com --fix); o resto roda no projeto inteiro
+# porque um erro de tipo ou um teste quebrado raramente fica contido no
+# arquivo que foi mexido. A suíte roda em menos de um segundo.
+npx lint-staged || exit 1
+npm run typecheck || exit 1
+npm test -- --silent || exit 1

@@ -87,10 +87,10 @@ export interface PokemonAbility {
 export interface PokemonTypeResponse {
   id: number;
   name: PokemonTypeName;
-  pokemon: Array<{
+  pokemon: {
     pokemon: PokemonListItem;
     slot: number;
-  }>;
+  }[];
 }
 
 // ============================================
@@ -130,17 +130,17 @@ export interface PokemonSpecies {
     name: string;
     url: string;
   };
-  pokedex_numbers: Array<{
+  pokedex_numbers: {
     entry_number: number;
     pokedex: {
       name: string;
       url: string;
     };
-  }>;
-  egg_groups: Array<{
+  }[];
+  egg_groups: {
     name: string;
     url: string;
-  }>;
+  }[];
   color: {
     name: string;
     url: string;
@@ -164,14 +164,14 @@ export interface PokemonSpecies {
     name: string;
     url: string;
   };
-  names: Array<{
+  names: {
     name: string;
     language: {
       name: string;
       url: string;
     };
-  }>;
-  flavor_text_entries: Array<{
+  }[];
+  flavor_text_entries: {
     flavor_text: string;
     language: {
       name: string;
@@ -181,28 +181,28 @@ export interface PokemonSpecies {
       name: string;
       url: string;
     };
-  }>;
-  form_descriptions: Array<{
+  }[];
+  form_descriptions: {
     description: string;
     language: {
       name: string;
       url: string;
     };
-  }>;
-  genera: Array<{
+  }[];
+  genera: {
     genus: string;
     language: {
       name: string;
       url: string;
     };
-  }>;
-  varieties: Array<{
+  }[];
+  varieties: {
     is_default: boolean;
     pokemon: {
       name: string;
       url: string;
     };
-  }>;
+  }[];
 }
 
 // ============================================

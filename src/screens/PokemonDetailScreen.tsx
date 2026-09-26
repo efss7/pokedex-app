@@ -60,11 +60,14 @@ export const PokemonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     refetch,
   } = usePokemonDetails(pokemonId);
 
-  // Toggle shiny (reseta ao trocar de pokémon)
+  // Toggle shiny (reseta ao trocar de pokémon). Ajuste durante a render em vez
+  // de efeito: sem o render extra que mostraria o shiny do pokémon anterior.
   const [showShiny, setShowShiny] = React.useState(false);
-  React.useEffect(() => {
+  const [pokemonIdAnterior, setPokemonIdAnterior] = React.useState(pokemonId);
+  if (pokemonId !== pokemonIdAnterior) {
+    setPokemonIdAnterior(pokemonId);
     setShowShiny(false);
-  }, [pokemonId]);
+  }
 
   // Toast de feedback (favoritar)
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);

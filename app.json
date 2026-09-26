@@ -8,7 +8,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.efss7.pokedexapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -16,7 +17,7 @@
         "backgroundColor": "#ffffff"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.pokedexapp"
+      "package": "com.efss7.pokedexapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"

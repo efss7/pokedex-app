@@ -3,7 +3,7 @@
 Branch: `feature/fase-5-avancado` (criada a partir da `develop`, que já tem a Fase 4).
 Este documento existe para não perder o contexto (ex.: após formatar a máquina).
 
-## ✅ Feito (Parte 1 — este commit)
+## ✅ Feito (Parte 1 — commit `a5901aa`)
 - **Deep linking**: `mydex://pokemon/25`, `/compare`, `/ranking`, `/favorites`, `/account`
   — `src/navigation/linking.ts`
 - **Comparação de Pokémons** — `src/screens/ComparisonScreen.tsx`
@@ -16,12 +16,28 @@ Este documento existe para não perder o contexto (ex.: após formatar a máquin
 - **Offline-first / cache persistente** — `PersistQueryClientProvider` + AsyncStorage
   (`App.tsx`, `src/services/queryClient.ts`)
 
+## ✅ Feito (upgrade de ambiente + correções — commits `b585db5` e `afbb908`)
+- **Expo SDK 54 → 57** (`b585db5`): o Expo Go da App Store se atualizou sozinho
+  e parou de abrir o projeto. RN 0.86, React 19.2, TS 6. Exigiu: `ignoreDeprecations`
+  no tsconfig, `StyleSheet.absoluteFillObject` → `absoluteFill`, remoção de
+  `newArchEnabled`/`edgeToEdgeEnabled` do `app.json` e migração do `splash`
+  para o plugin `expo-splash-screen`.
+- **Bug: favoritos vazavam entre contas** (`afbb908`): o `signOut` não limpava a
+  lista local, então ao logar outra conta no mesmo aparelho o `syncWithCloud`
+  enviava os favoritos do usuário anterior para a conta nova. Agora a subscription
+  em `App.tsx` limpa o local no logout.
+- **Bug: offline-first estava pela metade** (`afbb908`): no RN o TanStack Query
+  não detecta conectividade sozinho e se considerava sempre online. `onlineManager`
+  ligado ao NetInfo; novo hook `src/hooks/useIsOnline.ts` e tela de "Você está
+  offline" na lista (sem isso, offline e sem cache a lista ficava em branco e muda).
+- **Log de debug `[persist]` removido** do `App.tsx`.
+
 ## ❌ Pendente (Parte 2 — fazer depois)
 1. **Notificação "Pokémon da semana"** — única feature que falta.
    É uma notificação **local semanal** → roda no Expo Go (sem push/dev build).
    Usar `expo-notifications` (agendar notificação semanal com um pokémon aleatório).
-2. **Remover o log de debug** `[persist]` no `App.tsx` (callback `onSuccess` do
-   `PersistQueryClientProvider`) depois de validar a persistência.
+2. **Validar o offline no aparelho** — ver a seção "Como validar" abaixo.
+   As correções passaram por typecheck/build, mas não foram testadas rodando.
 3. **Commitar a Parte 2** e abrir o PR `feature/fase-5-avancado` → `develop`.
 
 ## ⛔ Fora de escopo (limitação da PokeAPI — problema N+1)
@@ -36,11 +52,48 @@ Este documento existe para não perder o contexto (ex.: após formatar a máquin
   (Chip / Button / Badge / Card) estão duplicados por tela. Plano: criar
   primitivos compartilhados usando os tokens e adotá-los nas telas.
 
-## Como validar a persistência (offline-first) após reinstalar o ambiente
+## Como validar
+
+### Persistência do cache (app reiniciado, com rede)
 1. Rode o app e navegue (lista, alguns detalhes, uma busca) para popular o cache.
-2. No terminal do Metro, aperte `r` (reload) — isso zera a memória e re-monta.
-3. Veja no log: `[persist] cache restaurado do disco: N queries`.
-   Se `N > 0`, a persistência está funcionando (os dados vieram do disco).
+2. No terminal do Metro, aperte `r` (reload) — zera a memória e re-monta.
+3. A lista deve aparecer **preenchida de imediato**, sem passar pelos skeletons.
+   Se aparecer skeleton, o cache não veio do disco.
+
+### Offline COM cache (Expo Go, iPhone)
+1. Abra o app e navegue para popular o cache.
+2. Ative o **modo avião**.
+3. Navegue pela lista e abra detalhes já visitados — os dados devem continuar
+   aparecendo, vindos do cache, sem erro e sem spinner infinito.
+4. Desative o modo avião: as queries devem refazer sozinhas (é o `onlineManager`
+   reagindo à reconexão).
+
+⚠️ No Expo Go o bundle JS vem do Metro pela wi-fi. Com o modo avião o app que já
+está carregado continua rodando (o JS está em memória), mas **não dá para recarregar**
+— o `r` do Metro não chega. Por isso o cenário abaixo não é testável no aparelho.
+
+### Offline SEM cache (a tela "Você está offline") — usar o simulador iOS
+No simulador o Metro é servido por `localhost`, então dá para desligar a internet
+do Mac sem perder o bundle — é o único jeito de reproduzir "abrir o app offline".
+1. `npx expo start` e aperte `i` para abrir no simulador.
+2. Em `App.tsx`, troque o `buster: 'v1'` para `'v2'` — isso descarta o cache
+   persistido no próximo boot, simulando instalação nova. (Reverta depois.)
+3. Desligue a **wi-fi do Mac** e recarregue o app no simulador.
+4. Esperado: a tela **"Você está offline"**, e não uma lista vazia e muda
+   nem "Erro ao carregar pokémons".
+
+⚠️ O NetInfo no simulador iOS nem sempre reflete o estado real do Mac. Se a tela
+de offline não aparecer, teste antes se o problema é o simulador (o cenário "offline
+com cache" acima, no aparelho, já exercita o mesmo `onlineManager`).
+
+### Bug dos favoritos entre contas
+Sem precisar de duas contas: logue, favorite alguns pokémons, e **saia**.
+A lista de favoritos deve ficar **vazia** após o logout (antes, continuava com
+os favoritos da conta que saiu — e eles iam parar na próxima conta que logasse).
+Com duas contas: logue em A, favorite, saia, logue em B — B não pode ver nada de A.
+
+### Log de debug
+Após um reload, o terminal do Metro **não** deve mais imprimir `[persist] ...`.
 
 ## Git / fluxo combinado
 - Cada `feature/fase-X` sai da `develop` **atualizada** → PR de volta para `develop`.

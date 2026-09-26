@@ -62,7 +62,12 @@ publicada (dev build ou TestFlight), onde não existem as limitações do Expo G
 - Offline com cache (dados continuam aparecendo)
 - Offline sem cache (tela "Você está offline")
 - Favoritos não vazam entre contas no logout
-- Notificação "Pokémon da semana" dispara e abre o pokémon certo
+
+✅ **Notificação "Pokémon da semana" — já validada no iPhone** (26/09/2026, Expo Go):
+permissão, disparo, banner na tela bloqueada e toque abrindo os detalhes do
+pokémon sorteado. Testada com um gatilho temporário de 8 segundos (trigger
+`TIME_INTERVAL` atrás de `__DEV__`), removido depois do teste. O que **não** foi
+exercitado é o disparo no horário real (segunda, 9h) e a recomposição da fila.
 
 ## ⛔ Fora de escopo (limitação da PokeAPI — problema N+1)
 - **Filtro por STATS** na dex inteira: exigiria os stats de ~1025 pokémons

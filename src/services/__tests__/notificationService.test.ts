@@ -36,6 +36,13 @@ beforeEach(() => {
   (Notifications.getAllScheduledNotificationsAsync as jest.Mock).mockResolvedValue([]);
 });
 
+// `clearAllMocks` zera as chamadas mas não desfaz spies. Restaurar aqui, e não
+// no fim de cada teste, garante que um teste que falhe no meio não deixe um
+// spy (Math.random, por exemplo) vazando para os seguintes.
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('ensureNotificationPermission', () => {
   it('não pede de novo quando já está concedida', async () => {
     (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
@@ -156,8 +163,6 @@ describe('scheduleWeeklyPokemon', () => {
       ([arg]) => arg.content.data.url
     );
     expect(new Set(urls).size).toBe(8);
-
-    (Math.random as jest.Mock).mockRestore();
   });
 
   // Regressão: cancelar antes de buscar deixava o usuário com ZERO notificações

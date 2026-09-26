@@ -26,6 +26,13 @@ interface AdvancedFiltersProps {
 
 const prettyAbility = (slug: string) => slug.replace(/-/g, ' ');
 
+/**
+ * As habilidades são exibidas com espaço ("flash fire") mas chegam da API como
+ * slug ("flash-fire"). Normalizar os dois lados faz a busca achar tanto o que
+ * está escrito na tela quanto o slug.
+ */
+const normalizeAbility = (value: string) => value.toLowerCase().replace(/-/g, ' ');
+
 export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   visible,
   onClose,
@@ -41,8 +48,8 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
 
   const filteredAbilities = React.useMemo(() => {
     const all = abilities ?? [];
-    const q = abilityQuery.trim().toLowerCase();
-    return q ? all.filter((a) => a.includes(q)) : all;
+    const q = normalizeAbility(abilityQuery.trim());
+    return q ? all.filter((a) => normalizeAbility(a).includes(q)) : all;
   }, [abilities, abilityQuery]);
 
   const renderAbility = ({ item }: { item: string }) => {

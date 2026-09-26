@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
 import * as Linking from 'expo-linking';
 import { getPokemonIndex } from '@services/pokemonService';
+import { queryClient } from '@services/queryClient';
 import type { SimplifiedPokemon } from '@/types/pokemon';
 
 /**
@@ -31,6 +32,18 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+/**
+ * Índice da dex reaproveitando o cache do TanStack Query (mesma chave do
+ * `usePokemonIndex`), em vez de baixar `/pokemon?limit=20000` de novo a cada
+ * agendamento. Mesmo padrão do `fetchTypeRoster` em `hooks/usePokemonByType`.
+ */
+const fetchPokemonIndexCached = (): Promise<SimplifiedPokemon[]> =>
+  queryClient.fetchQuery({
+    queryKey: ['pokemonIndex'],
+    queryFn: getPokemonIndex,
+    staleTime: 1000 * 60 * 60,
+  });
 
 /** As próximas `count` segundas às 09:00, a partir de agora. */
 const nextOccurrences = (count: number): Date[] => {
@@ -98,9 +111,13 @@ export const cancelWeeklyPokemon = async (): Promise<void> => {
  * `WEEKS_AHEAD` ocorrências. Precisa de rede (usa o índice da PokeAPI).
  */
 export const scheduleWeeklyPokemon = async (): Promise<number> => {
+  // Busca ANTES de cancelar: se a rede falhar, a fila atual continua de pé.
+  // Na ordem inversa, uma falha aqui deixaria o usuário com zero notificações
+  // e o toggle ainda marcado como ligado.
+  const index = await fetchPokemonIndexCached();
+
   await cancelWeeklyPokemon();
 
-  const index = await getPokemonIndex();
   const dates = nextOccurrences(WEEKS_AHEAD);
   const picks = pickDistinct(index, dates.length);
 

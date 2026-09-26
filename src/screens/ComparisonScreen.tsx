@@ -34,6 +34,14 @@ export const ComparisonScreen: React.FC<Props> = ({ route }) => {
   const [slotB, setSlotB] = React.useState<number | null>(null);
   const [picking, setPicking] = React.useState<'a' | 'b' | null>(null);
 
+  // `navigate` para uma instância que já está na stack atualiza os params sem
+  // remontar a tela, e aí o valor inicial do useState acima seria ignorado —
+  // o botão ⇄ pareceria não fazer nada.
+  const aId = route.params?.aId;
+  React.useEffect(() => {
+    if (aId != null) setSlotA(aId);
+  }, [aId]);
+
   const a = usePokemonBasic(slotA ?? undefined);
   const b = usePokemonBasic(slotB ?? undefined);
 

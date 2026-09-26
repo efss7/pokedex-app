@@ -27,7 +27,17 @@ export const linking: LinkingOptions<RootStackParamList> = {
 
   // App aberto pelo toque numa notificação (estava fechado).
   async getInitialURL() {
-    return (await Linking.getInitialURL()) ?? urlFromNotification(Notifications.getLastNotificationResponse());
+    const url = await Linking.getInitialURL();
+    if (url) return url;
+
+    // O módulo nativo guarda a última resposta pelo processo inteiro, então é
+    // preciso consumi-la: sem o clear, uma remontagem do NavigationContainer
+    // (recriação de Activity no Android, por exemplo) leria a mesma resposta e
+    // reabriria uma rota que o usuário já tinha visitado.
+    const fromNotification = urlFromNotification(Notifications.getLastNotificationResponse());
+    if (fromNotification) Notifications.clearLastNotificationResponse();
+
+    return fromNotification;
   },
 
   // App já aberto: reage tanto a deep links quanto ao toque em notificações.

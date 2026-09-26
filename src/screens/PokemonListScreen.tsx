@@ -155,11 +155,35 @@ export const PokemonListScreen = () => {
    * Renderiza mensagem quando não há resultados
    */
   const renderEmptyComponent = () => {
-    // Não mostrar nada enquanto não terminou o fetch ou está carregando
-    if (!isFetched || isLoading) return null;
+    if (isLoading) return null;
 
     // Não mostrar se tem dados na lista
     if (filteredData.length > 0) return null;
+
+    // Sem rede a query fica pausada: nem loading, nem erro. Fica aqui dentro da
+    // lista, e não num early return da tela, para a busca e os filtros seguirem
+    // montados — senão o usuário não teria como limpar o filtro que zerou a
+    // lista e ficaria preso na mensagem até reconectar.
+    if (!isOnline) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Ionicons
+            name="cloud-offline-outline"
+            size={44}
+            color={theme.colors.textSecondary}
+            style={styles.emptyIcon}
+          />
+          <Text style={[styles.emptyText, { color: theme.colors.text }]}>Você está offline</Text>
+          <Text style={[styles.emptySubtext, { color: theme.colors.textSecondary }]}>
+            Conecte-se para carregar o que ainda não está em cache. O que você já
+            visitou continua disponível.
+          </Text>
+        </View>
+      );
+    }
+
+    // Não mostrar nada enquanto não terminou o fetch
+    if (!isFetched) return null;
 
     // Só mostrar se tem um filtro ativo (busca, tipo ou avançado)
     const hasActiveFilter = searchTerm.trim() || isTypeFilter || advancedCount > 0;
@@ -179,28 +203,6 @@ export const PokemonListScreen = () => {
       </View>
     );
   };
-
-  /**
-   * Sem rede e sem nada em cache: a query fica pausada (nem loading, nem erro),
-   * então a lista ficaria vazia e muda. Explica o que houve.
-   */
-  if (!isOnline && !isLoading && filteredData.length === 0) {
-    return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background }]}>
-        <Ionicons
-          name="cloud-offline-outline"
-          size={44}
-          color={theme.colors.textSecondary}
-          style={styles.emptyIcon}
-        />
-        <Text style={[styles.emptyText, { color: theme.colors.text }]}>Você está offline</Text>
-        <Text style={[styles.emptySubtext, { color: theme.colors.textSecondary }]}>
-          Conecte-se à internet para carregar a Pokédex. O que você já visitou fica
-          disponível offline.
-        </Text>
-      </View>
-    );
-  }
 
   /**
    * Renderiza mensagem de erro

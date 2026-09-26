@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppTheme } from '@theme/ThemeProvider';
 import { useFavoritesStore } from '@store/favoritesStore';
+import { useIsOnline } from '@hooks/useIsOnline';
 import { getPokemonDetails } from '@services/pokemonService';
 import { STAT_NAMES, STAT_COLORS } from '@constants/index';
 import type { Pokemon } from '@/types/pokemon';
@@ -56,6 +57,7 @@ export const RankingScreen = () => {
   const theme = useAppTheme();
   const navigation = useNavigation<NavigationProp>();
   const favorites = useFavoritesStore((state) => state.favorites);
+  const isOnline = useIsOnline();
   const [sortStat, setSortStat] = React.useState<StatKey>('total');
 
   const results = useQueries({
@@ -71,12 +73,13 @@ export const RankingScreen = () => {
     .map((r) => r.data)
     .filter((p): p is Pokemon => Boolean(p));
   const isLoading = results.some((r) => r.isLoading) && loaded.length === 0;
+  const hasError = results.some((r) => r.isError);
 
-  const ranked = React.useMemo(() => {
-    return [...loaded]
-      .map((p) => ({ pokemon: p, value: getStatValue(p, sortStat) }))
-      .sort((a, b) => b.value - a.value);
-  }, [loaded, sortStat]);
+  // Sem memo: `loaded` é um array novo a cada render, então um useMemo aqui
+  // nunca acertaria o cache — e ordenar algumas dezenas de favoritos é trivial.
+  const ranked = loaded
+    .map((p) => ({ pokemon: p, value: getStatValue(p, sortStat) }))
+    .sort((a, b) => b.value - a.value);
 
   const maxValue = ranked.length > 0 ? ranked[0].value : 1;
 
@@ -137,6 +140,28 @@ export const RankingScreen = () => {
           data={ranked}
           keyExtractor={(item) => item.pokemon.id.toString()}
           contentContainerStyle={styles.list}
+          // Offline as queries ficam pausadas e com erro elas nunca são lidas:
+          // nos dois casos não há loading nem dados, e sem isto a tela ficaria
+          // em branco e muda, só com os chips de atributo no topo.
+          ListEmptyComponent={
+            <View style={styles.center}>
+              <Ionicons
+                name={isOnline ? 'alert-circle-outline' : 'cloud-offline-outline'}
+                size={44}
+                color={theme.colors.textSecondary}
+              />
+              <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+                {isOnline ? 'Não foi possível carregar' : 'Você está offline'}
+              </Text>
+              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+                {isOnline
+                  ? hasError
+                    ? 'A busca dos dados dos seus favoritos falhou. Volte e entre de novo nesta tela para tentar outra vez.'
+                    : 'Nenhum favorito pôde ser carregado.'
+                  : 'Conecte-se para carregar os favoritos que ainda não estão em cache.'}
+              </Text>
+            </View>
+          }
           renderItem={({ item, index }) => {
             const barColor =
               sortStat === 'total' ? theme.colors.primary : STAT_COLORS[sortStat] || theme.colors.primary;

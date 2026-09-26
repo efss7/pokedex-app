@@ -90,17 +90,25 @@ npx eas-cli env:create --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<chave>"
 
 ## 📋 Pendente
 
-1. **Verificar a web rodando de verdade.** O export compila e o bundle carrega,
-   mas *compilar não é rodar*: falta abrir no navegador e conferir o que o
-   `react-native-web` faz com `reanimated`, `expo-image` e o `react-native-svg`
-   do gráfico de stats. Para testar local, sem depender do Pages:
+1. ✅ **Web verificada no navegador** (26/09/2026). A Pokédex roda inteira:
+   lista, busca, filtros, detalhes, comparação, ranking, favoritos e login.
+   A validação achou três bugs que o export compilando não revelava — roteamento
+   no subcaminho, layout de desktop e um flash de erro no carregamento —, todos
+   corrigidos. Também destravou os cenários que estavam pendentes desde a Fase 5
+   (offline, persistência, favoritos entre contas): ver FASE5_PENDENCIAS.md.
+   Para reproduzir o ambiente local, com o mesmo fallback de SPA do Pages:
    ```
    npx expo export --platform web
    mkdir -p /tmp/site/pokedex-app && cp -R dist/* /tmp/site/pokedex-app/
-   cd /tmp/site && python3 -m http.server 4173
+   cp dist/index.html /tmp/site/pokedex-app/404.html
+   cd /tmp/site && npx serve -l 4173
    ```
    e abrir `http://localhost:4173/pokedex-app/` — o subcaminho importa, porque é
    ele que o `baseUrl` espera.
+
+   ⚠️ Um `python3 -m http.server` **não serve** para testar recarga em rota
+   profunda: ele devolve o próprio 404 e ignora o `404.html`, enquanto o GitHub
+   Pages serve esse arquivo. Testar com ele dá falso negativo.
 2. **E2E** — último item da Fase 6, destravado pela dev build. O roadmap diz
    Detox; vale reavaliar **Maestro**, bem mais simples em projeto Expo.
 3. **README com print ou GIF** — para portfólio, rende mais que qualquer outra

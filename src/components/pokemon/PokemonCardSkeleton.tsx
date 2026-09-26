@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { useAppTheme } from '@theme/ThemeProvider';
+import { useGridLayout } from '@hooks/useGridLayout';
 
 /**
  * Componente Skeleton - Placeholder animado durante carregamento
@@ -8,6 +9,7 @@ import { useAppTheme } from '@theme/ThemeProvider';
  */
 export const PokemonCardSkeleton = () => {
   const theme = useAppTheme();
+  const { cardWidth } = useGridLayout();
   
   // Animação de "pulso" - opacidade vai e volta
   const pulseAnim = React.useRef(new Animated.Value(0.3)).current;
@@ -31,7 +33,7 @@ export const PokemonCardSkeleton = () => {
   }, [pulseAnim]);
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+    <View style={[styles.card, { width: cardWidth }, { backgroundColor: theme.colors.surface }]}>
       {/* Imagem placeholder */}
       <Animated.View 
         style={[
@@ -81,7 +83,8 @@ export const PokemonCardSkeleton = () => {
 
 const styles = StyleSheet.create({
   card: {
-    width: '48%',
+    // width vem do useGridLayout, para bater com o card real em qualquer
+    // largura de janela.
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,

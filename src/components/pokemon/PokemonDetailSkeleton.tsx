@@ -1,8 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import { useAppTheme } from '@theme/ThemeProvider';
-
-const { width } = Dimensions.get('window');
 
 /**
  * Bloco cinza pulsante. Fica no escopo do módulo, e não dentro do skeleton:
@@ -26,6 +24,8 @@ const Block = ({
  */
 export const PokemonDetailSkeleton = () => {
   const theme = useAppTheme();
+  const { width: larguraJanela } = useWindowDimensions();
+  const tamanhoArte = Math.min(larguraJanela * 0.5, 280);
   const pulse = React.useRef(new Animated.Value(0.3)).current;
 
   React.useEffect(() => {
@@ -41,7 +41,11 @@ export const PokemonDetailSkeleton = () => {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header com imagem */}
       <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
-        <Block color={theme.colors.border} opacity={pulse} style={styles.image} />
+        <Block
+          color={theme.colors.border}
+          opacity={pulse}
+          style={[styles.image, { width: tamanhoArte, height: tamanhoArte, borderRadius: tamanhoArte / 2 }]}
+        />
       </View>
 
       {/* Conteúdo */}
@@ -86,9 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   image: {
-    width: width * 0.5,
-    height: width * 0.5,
-    borderRadius: (width * 0.5) / 2,
+    // width, height e borderRadius vêm do componente (useWindowDimensions).
   },
   content: {
     padding: 20,

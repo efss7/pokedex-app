@@ -11,6 +11,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useAppTheme } from '@theme/ThemeProvider';
+import { useGridLayout } from '@hooks/useGridLayout';
 import { useThemeStore } from '@store/themeStore';
 import { useAuthStore } from '@store/authStore';
 import { PokemonCardSkeleton } from '@components/pokemon/PokemonCardSkeleton';
@@ -126,6 +127,7 @@ export const PokemonListScreen = () => {
 
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const isOnline = useIsOnline();
+  const { columns } = useGridLayout();
 
   /**
    * Renderiza cada item da lista
@@ -264,7 +266,8 @@ export const PokemonListScreen = () => {
         data={isLoading && !filteredData.length ? Array.from({ length: 6 }, (_, i) => ({ id: `skeleton-${i}`, isLoading: true as const })) : filteredData}
         renderItem={({item}) => isSkeletonItem(item) ? <PokemonCardSkeleton /> : renderItem({item})}
         keyExtractor={(item) => isSkeletonItem(item) ? item.id : item.id.toString()}
-        numColumns={2}
+        key={columns}
+        numColumns={columns}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.listContent}
         scrollEnabled={!isLoading || filteredData.length > 0}

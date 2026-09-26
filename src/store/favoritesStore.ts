@@ -23,6 +23,16 @@ interface FavoritesState {
   syncWithCloud: () => Promise<void>;
 }
 
+/**
+ * Grava no disco sem travar a UI, mas sem engolir o erro.
+ * No web o AsyncStorage é o localStorage: se a cota estourar, a escrita rejeita
+ * e antes disso ninguém ficava sabendo — o coração preenchia, o toast aparecia,
+ * e o favorito sumia no reload.
+ */
+const persistir = (promessa: Promise<void>) => {
+  void promessa.catch((e) => console.warn('favorites: falha ao gravar no dispositivo', e));
+};
+
 /** Usuário logado (ou null) — usado para decidir se espelha na nuvem. */
 const currentUser = () => {
   const { status, user } = useAuthStore.getState();
@@ -55,7 +65,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
       return;
     }
     const updated = [...current, pokemonId];
-    void storageHelpers.setObject(storageKeys.FAVORITES, updated);
+    persistir(storageHelpers.setObject(storageKeys.FAVORITES, updated));
     set({ favorites: updated });
 
     const user = currentUser();
@@ -68,7 +78,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
 
   removeFavorite: (pokemonId) => {
     const updated = get().favorites.filter((id) => id !== pokemonId);
-    void storageHelpers.setObject(storageKeys.FAVORITES, updated);
+    persistir(storageHelpers.setObject(storageKeys.FAVORITES, updated));
     set({ favorites: updated });
 
     if (currentUser()) {
@@ -92,7 +102,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   },
 
   clearFavorites: () => {
-    void storageHelpers.removeItem(storageKeys.FAVORITES);
+    persistir(storageHelpers.removeItem(storageKeys.FAVORITES));
     set({ favorites: [] });
   },
 
@@ -117,7 +127,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
       // gravar `merged` devolveria os favoritos da conta anterior ao aparelho.
       if (currentUser()?.id !== user.id) return;
 
-      void storageHelpers.setObject(storageKeys.FAVORITES, merged);
+      persistir(storageHelpers.setObject(storageKeys.FAVORITES, merged));
       set({ favorites: merged });
     } catch (e) {
       console.warn('favorites: sync com a nuvem falhou', e);

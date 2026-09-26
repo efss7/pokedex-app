@@ -1,9 +1,10 @@
-name: Deploy web (GitHub Pages)
+name: Web (CI e deploy)
 
-# Publica a versão web em https://efss7.github.io/pokedex-app/
-# Roda a partir da main, que é o marco de release (a develop segue sendo o
-# tronco de desenvolvimento).
+# CI em todo PR; deploy só no push para a main.
+# Rodar também em PR é proposital: sem isso, a primeira execução real do
+# pipeline seria o próprio release, com a main já publicada.
 on:
+  pull_request:
   push:
     branches: [main]
   workflow_dispatch:
@@ -13,7 +14,6 @@ permissions:
   pages: write
   id-token: write
 
-# Um deploy por vez; não cancela o que já está no ar.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -26,7 +26,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Explícito, e com `engines` no package.json documentando o piso.
+          # O Node 20 está EOL e já não cobre o mínimo exigido por
+          # react-native 0.86 e metro (^20.19.4 || ^22.13.0 || ^24.3.0 || >=25).
+          node-version: 22
           cache: npm
 
       - run: npm ci
@@ -36,30 +39,37 @@ jobs:
       - run: npm run lint
       - run: npm test -- --ci
 
+      # Secret ausente e secret com o nome errado produzem o mesmo resultado:
+      # string vazia, `isSupabaseConfigured` falso e deploy verde com login
+      # morto. O aviso separa "não configurei ainda" de "errei o nome".
+      - name: Conferir chaves do Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::warning title=Supabase não configurado::O site vai subir com o login desativado. Defina EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_ANON_KEY em Settings > Secrets > Actions."
+          fi
+
       - name: Exportar web
-        # As chaves do Supabase vêm dos secrets do repositório: o .env é
-        # gitignored e não chega aqui. Sem elas o app publica com login
-        # desativado (isSupabaseConfigured vira false), sem erro visível.
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: npx expo export --platform web
 
       # O GitHub Pages serve arquivos estáticos e não conhece as rotas do app.
-      # Sem um 404.html igual ao index, abrir /pokedex-app/pokemon/25 direto
-      # (ou recarregar a página) devolveria 404 em vez de carregar o app.
+      # Sem um 404.html igual ao index, recarregar em /pokedex-app/pokemon/25
+      # devolveria 404 em vez de carregar o app.
       - name: Fallback de SPA
         run: cp dist/index.html dist/404.html
-
-      # Impede o Jekyll de ignorar a pasta _expo, onde fica o bundle.
-      - name: Desativar Jekyll
-        run: touch dist/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
+    # Só publica a partir da main: em PR o job acima já serve de portão.
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:

@@ -53,15 +53,32 @@ quem vale é o `exp://`. Assim o toque funciona nos dois ambientes.
 ## ❌ Pendente (Parte 2 — fazer depois)
 1. **Commitar a Parte 2** e abrir o PR `feature/fase-5-avancado` → `develop`.
 
-## 🧪 Validar depois da publicação (Fase 7)
-Decisão consciente: seguir sem testar agora. As correções passaram por typecheck
-e build, mas **não foram exercitadas rodando**. Os cenários estão escritos na
-seção "Como validar" no fim deste arquivo — rodar todos quando houver build
-publicada (dev build ou TestFlight), onde não existem as limitações do Expo Go.
-- Persistência do cache entre reinícios
-- Offline com cache (dados continuam aparecendo)
-- Offline sem cache (tela "Você está offline")
-- Favoritos não vazam entre contas no logout
+## ✅ Validação feita (26/09/2026, build web local)
+Estes cenários ficaram pendentes por meses porque o Expo Go não permitia
+testá-los (modo avião derruba o Metro). **A versão web da Fase 7 destravou
+todos**: o DevTools simula offline e uma janela anônima dá a segunda conta.
+
+- **Offline com cache** — pokémons já visitados continuam abrindo, sem erro nem
+  spinner infinito
+- **Offline sem cache** — aparece a tela "Você está offline", e os filtros
+  continuam montados (o beco sem saída corrigido na review da Fase 5)
+- **Reconexão** — as queries refazem sozinhas ao voltar para online
+- **Persistência** — favoritos sobrevivem ao reload, com e sem rede
+- **Favoritos não vazam entre contas** — sair esvazia a lista na hora, e a
+  segunda conta (janela anônima) não vê nada da primeira. Era o bug mais grave
+  achado na review da Fase 5, corrigido no escuro e só agora verificado
+- **Link direto** — colar uma rota profunda numa aba nova abre na tela certa
+
+⚠️ **Ressalva:** tudo isso foi exercitado **no web**, onde o AsyncStorage é o
+localStorage. A lógica é a mesma do nativo (mesmo store, mesmo queryClient),
+mas o backend de armazenamento não é — então não é prova para o app nativo,
+e sim evidência forte.
+
+## 🧪 Ainda sem validação
+- **Persistência entre reinícios no app nativo** (no web foi via reload)
+- **Notificação no horário real** (segunda, 9h) e a recomposição da fila —
+  dependem de tempo decorrido
+- **Splash screen** numa build de verdade (ver FASE7_DEPLOY.md)
 
 ✅ **Notificação "Pokémon da semana" — já validada no iPhone** (26/09/2026, Expo Go):
 permissão, disparo, banner na tela bloqueada e toque abrindo os detalhes do

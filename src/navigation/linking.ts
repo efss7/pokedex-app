@@ -2,6 +2,7 @@ import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import type { LinkingOptions } from '@react-navigation/native';
 import type { RootStackParamList } from './AppNavigator';
+import { isSuportado as notificacoesSuportadas } from '@services/notificationService';
 
 /** A notificação "Pokémon da semana" carrega o deep link em `data.url`. */
 const urlFromNotification = (response: Notifications.NotificationResponse | null) => {
@@ -34,6 +35,9 @@ export const linking: LinkingOptions<RootStackParamList> = {
     // preciso consumi-la: sem o clear, uma remontagem do NavigationContainer
     // (recriação de Activity no Android, por exemplo) leria a mesma resposta e
     // reabriria uma rota que o usuário já tinha visitado.
+    // No web não há módulo de notificação para consultar.
+    if (!notificacoesSuportadas) return null;
+
     const fromNotification = urlFromNotification(Notifications.getLastNotificationResponse());
     if (fromNotification) Notifications.clearLastNotificationResponse();
 
@@ -43,6 +47,11 @@ export const linking: LinkingOptions<RootStackParamList> = {
   // App já aberto: reage tanto a deep links quanto ao toque em notificações.
   subscribe(listener) {
     const linkSubscription = Linking.addEventListener('url', ({ url }) => listener(url));
+
+    if (!notificacoesSuportadas) {
+      return () => linkSubscription.remove();
+    }
+
     const notificationSubscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const url = urlFromNotification(response);

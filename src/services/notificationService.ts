@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
 import * as Linking from 'expo-linking';
@@ -23,15 +24,25 @@ const HOUR = 9;
 /** Abaixo disto, a fila é reagendada no próximo boot. */
 const REFRESH_THRESHOLD = 2;
 
+/**
+ * Notificação local agendada não existe no browser, e este módulo é importado
+ * no boot (App.tsx). Sem a guarda, a versão web quebraria logo na abertura.
+ * `isSuportado` é a chave: com ele falso, todas as funções abaixo viram no-op
+ * em vez de chamar um módulo nativo que não existe.
+ */
+export const isSuportado = Platform.OS !== 'web';
+
 // Mostra a notificação mesmo com o app em primeiro plano.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+if (isSuportado) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 /**
  * Índice da dex reaproveitando o cache do TanStack Query (mesma chave do
@@ -82,6 +93,8 @@ const capitalize = (name: string) => name.charAt(0).toUpperCase() + name.slice(1
  * caso, só dá para reverter nos ajustes do sistema).
  */
 export const ensureNotificationPermission = async (): Promise<boolean> => {
+  if (!isSuportado) return false;
+
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
   if (!current.canAskAgain) return false;
@@ -92,12 +105,16 @@ export const ensureNotificationPermission = async (): Promise<boolean> => {
 
 /** Quantas notificações desta feature ainda estão na fila. */
 export const countWeeklyPokemon = async (): Promise<number> => {
+  if (!isSuportado) return 0;
+
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   return scheduled.filter((n) => n.content.data?.kind === MARKER).length;
 };
 
 /** Cancela as notificações desta feature (não mexe em outras). */
 export const cancelWeeklyPokemon = async (): Promise<void> => {
+  if (!isSuportado) return;
+
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   await Promise.all(
     scheduled
@@ -111,6 +128,8 @@ export const cancelWeeklyPokemon = async (): Promise<void> => {
  * `WEEKS_AHEAD` ocorrências. Precisa de rede (usa o índice da PokeAPI).
  */
 export const scheduleWeeklyPokemon = async (): Promise<number> => {
+  if (!isSuportado) return 0;
+
   // Busca ANTES de cancelar: se a rede falhar, a fila atual continua de pé.
   // Na ordem inversa, uma falha aqui deixaria o usuário com zero notificações
   // e o toggle ainda marcado como ligado.

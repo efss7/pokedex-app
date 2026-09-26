@@ -20,7 +20,11 @@
       "package": "com.efss7.pokedexapp"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "experiments": {
+      "baseUrl": "/pokedex-app"
     },
     "plugins": [
       "expo-image",

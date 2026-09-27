@@ -8,6 +8,7 @@ export interface SimplifiedEvolution {
   id: number;
   name: string;
   imageUrl: string;
+  stage: number; // 0 = espécie base, 1 = evolui diretamente dela, etc.
   trigger?: string; // level-up, trade, use-item, etc.
   minLevel?: number;
   item?: string;
@@ -116,9 +117,16 @@ const formatEvolutionCondition = (detail: EvolutionDetail): string => {
 
 /**
  * Processa recursivamente a cadeia evolutiva e retorna array linear
+ *
+ * Percorre TODOS os ramos de `evolves_to`, não só o primeiro — pokémons como
+ * Eevee têm várias evoluções paralelas no mesmo estágio, e descartar os
+ * demais ramos escondia a maioria delas. O `stage` marca a distância até a
+ * espécie base, permitindo que a UI agrupe evoluções paralelas lado a lado
+ * sem precisar entender a árvore.
  */
 const processChainLink = (
   chain: ChainLink,
+  stage: number = 0,
   result: SimplifiedEvolution[] = []
 ): SimplifiedEvolution[] => {
   const id = extractIdFromUrl(chain.species.url);
@@ -129,12 +137,13 @@ const processChainLink = (
     id,
     name: chain.species.name,
     imageUrl,
+    stage,
   };
 
   // Se tem detalhes de evolução (não é o primeiro da cadeia)
   if (chain.evolution_details.length > 0) {
     const detail = chain.evolution_details[0]; // Pega o primeiro método de evolução
-    
+
     evolution.trigger = detail.trigger.name;
     evolution.minLevel = detail.min_level || undefined;
     evolution.item = detail.item?.name;
@@ -143,12 +152,10 @@ const processChainLink = (
 
   result.push(evolution);
 
-  // Processar próximas evoluções recursivamente
-  if (chain.evolves_to.length > 0) {
-    // Por simplicidade, vamos seguir apenas o primeiro caminho
-    // (alguns pokémons têm múltiplas evoluções como Eevee)
-    processChainLink(chain.evolves_to[0], result);
-  }
+  // Processa cada ramo seguinte, todos no próximo estágio
+  chain.evolves_to.forEach((nextLink) => {
+    processChainLink(nextLink, stage + 1, result);
+  });
 
   return result;
 };
@@ -164,9 +171,9 @@ const processChainLink = (
  * const chain = await getEvolutionChain(url);
  * const evolutions = parseEvolutionChain(chain);
  * // [
- * //   { id: 1, name: 'bulbasaur', imageUrl: '...', trigger: undefined },
- * //   { id: 2, name: 'ivysaur', imageUrl: '...', trigger: 'level-up', minLevel: 16 },
- * //   { id: 3, name: 'venusaur', imageUrl: '...', trigger: 'level-up', minLevel: 32 }
+ * //   { id: 1, name: 'bulbasaur', imageUrl: '...', stage: 0, trigger: undefined },
+ * //   { id: 2, name: 'ivysaur', imageUrl: '...', stage: 1, trigger: 'level-up', minLevel: 16 },
+ * //   { id: 3, name: 'venusaur', imageUrl: '...', stage: 2, trigger: 'level-up', minLevel: 32 }
  * // ]
  * ```
  */

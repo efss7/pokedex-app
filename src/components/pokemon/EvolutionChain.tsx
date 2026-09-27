@@ -196,6 +196,11 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     gap: 12,
+    // Eevee tem 8 evoluções no mesmo estágio. Empilhadas numa coluna só, a
+    // seção passaria de mil pixels de altura e empurraria o resto da tela.
+    // Com o teto, a coluna quebra em grade (o ScrollView é horizontal).
+    flexWrap: 'wrap',
+    maxHeight: 480,
   },
   evolutionCard: {
     width: 120,

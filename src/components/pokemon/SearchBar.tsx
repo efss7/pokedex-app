@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  Platform,
+  type TextStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@theme/ThemeProvider';
@@ -64,7 +66,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onChangeTerm, loading = fa
           style={styles.icon}
         />
         <TextInput
-          style={[styles.input, { color: theme.colors.text }]}
+          style={[styles.input, { color: theme.colors.text }, semAnelDeFoco]}
           placeholder="Buscar por nome ou ID..."
           placeholderTextColor={theme.colors.textSecondary}
           value={text}
@@ -92,6 +94,19 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onChangeTerm, loading = fa
     </View>
   );
 };
+
+/**
+ * No web o react-native-web renderiza o TextInput como <input>, e o navegador
+ * desenha o próprio anel de foco azul por cima da borda arredondada do campo.
+ * Aqui ele é redundante: o container já muda a cor da borda e do ícone quando
+ * recebe foco. Os outros campos do app NÃO têm indicador próprio, então neles
+ * o anel do navegador é mantido de propósito — é a única pista de foco para
+ * quem navega por teclado.
+ */
+const semAnelDeFoco = Platform.select({
+  web: { outlineWidth: 0 } as TextStyle,
+  default: undefined,
+});
 
 const styles = StyleSheet.create({
   container: {

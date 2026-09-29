@@ -235,7 +235,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: 'center',
   },
-  chipText: { fontSize: 14, fontWeight: '600', textAlign: 'center' },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    // Sem lineHeight explícito o iOS corta a perna de letras como o "q" de
+    // "Ataque": com alignItems no container, o chip passou a ter altura justa
+    // e não sobra a folga que antes vinha do stretch.
+    lineHeight: 18,
+  },
   list: { padding: 16, paddingTop: 4 },
   row: {
     flexDirection: 'row',

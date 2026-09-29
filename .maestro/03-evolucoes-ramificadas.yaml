@@ -1,0 +1,20 @@
+# Regressão: o Eevee tem 8 evoluções e o app mostrava só a primeira.
+# Este fluxo falha se a cadeia voltar a ser cortada.
+appId: com.efss7.pokedexapp
+---
+- launchApp:
+    clearState: true
+
+- tapOn: 'Buscar por nome ou ID...'
+- inputText: 'eevee'
+- tapOn: 'Ver detalhes de eevee'
+
+- assertVisible: 'Evoluções'
+- scrollUntilVisible:
+    element: 'Vaporeon'
+    direction: DOWN
+
+# Vaporeon e Sylveon são o primeiro e o último ramo: se os dois aparecem,
+# a cadeia não foi truncada.
+- assertVisible: 'Vaporeon'
+- assertVisible: 'Sylveon'

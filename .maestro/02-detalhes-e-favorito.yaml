@@ -1,0 +1,18 @@
+# Abre um detalhe, favorita e confere que o favorito aparece na outra tela.
+# Cobre a persistência local, que é um caminho que já quebrou antes.
+appId: com.efss7.pokedexapp
+---
+- launchApp:
+    clearState: true
+
+- tapOn: 'Ver detalhes de bulbasaur'
+- assertVisible: 'Evoluções'
+
+- tapOn: 'Adicionar aos favoritos'
+- assertVisible: 'Remover dos favoritos'
+
+- back
+- tapOn: 'Ver favoritos'
+
+- assertVisible: 'Favoritos'
+- assertVisible: 'Ver detalhes de bulbasaur'

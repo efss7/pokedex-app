@@ -66,6 +66,16 @@ export const PokemonEvolutionChain: React.FC<PokemonEvolutionChainProps> = ({
   });
   const orderedStages = [...stages.entries()].sort(([a], [b]) => a - b);
 
+  // O ScrollView é horizontal, então a coluna que quebra precisa de largura
+  // EXPLÍCITA: o Yoga não deduz a largura das colunas geradas pelo wrap dentro
+  // de um container de rolagem, e o excedente fica cortado — no Eevee sumiam
+  // duas das oito evoluções. Com o card de altura fixa, a conta é exata.
+  const porColuna = Math.max(1, Math.floor((ALTURA_MAX_COLUNA + GAP) / (ALTURA_CARD + GAP)));
+  const larguraDaColuna = (total: number) => {
+    const colunas = Math.ceil(total / porColuna);
+    return colunas * LARGURA_CARD + (colunas - 1) * GAP;
+  };
+
   return (
     <View style={styles.container}>
       <Text style={[styles.title, { color: theme.colors.text }]}>
@@ -83,7 +93,7 @@ export const PokemonEvolutionChain: React.FC<PokemonEvolutionChainProps> = ({
           return (
             <React.Fragment key={stage}>
               {/* Coluna com todas as evoluções deste estágio */}
-              <View style={styles.stageColumn}>
+              <View style={[styles.stageColumn, { width: larguraDaColuna(stageEvolutions.length) }]}>
                 {stageEvolutions.map((evolution) => {
                   const isCurrentPokemon = evolution.id === currentPokemonId;
 
@@ -179,6 +189,11 @@ export const PokemonEvolutionChain: React.FC<PokemonEvolutionChainProps> = ({
   );
 };
 
+const LARGURA_CARD = 120;
+const ALTURA_CARD = 170;
+const GAP = 12;
+const ALTURA_MAX_COLUNA = 2 * ALTURA_CARD + GAP; // duas linhas por coluna
+
 const styles = StyleSheet.create({
   container: {
     width: '100%',
@@ -195,15 +210,17 @@ const styles = StyleSheet.create({
   stageColumn: {
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 12,
-    // Eevee tem 8 evoluções no mesmo estágio. Empilhadas numa coluna só, a
-    // seção passaria de mil pixels de altura e empurraria o resto da tela.
-    // Com o teto, a coluna quebra em grade (o ScrollView é horizontal).
+    gap: GAP,
+    // Eevee tem 8 evoluções no mesmo estágio. Numa coluna única a seção
+    // passaria de mil pixels de altura; com o teto ela quebra em grade.
     flexWrap: 'wrap',
-    maxHeight: 480,
+    maxHeight: ALTURA_MAX_COLUNA,
   },
   evolutionCard: {
-    width: 120,
+    width: LARGURA_CARD,
+    // Altura fixa para o cálculo de colunas acima fechar, e para os cards do
+    // mesmo estágio alinharem mesmo com condições de tamanhos diferentes.
+    height: ALTURA_CARD,
     padding: 12,
     borderRadius: 12,
     borderWidth: 2,

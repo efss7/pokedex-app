@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.efss7.pokedexapp"
+      "bundleIdentifier": "com.efss7.pokedexapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -38,6 +41,12 @@
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "eeeb6e5b-555e-4149-a881-98b6a9d4635d"
+      }
+    },
+    "owner": "efss7"
   }
 }

@@ -10,10 +10,9 @@ sem instalar nada.
 
 [![CI](https://github.com/efss7/pokedex-app/actions/workflows/deploy-web.yml/badge.svg)](https://github.com/efss7/pokedex-app/actions/workflows/deploy-web.yml)
 
-<!-- TODO: substituir por um GIF da aplicação.
-     Sugestão: 10-15s percorrendo lista → busca → detalhes → comparação.
-     É o que mais prende quem abre o repositório, e só dá para gravar
-     com o app rodando. -->
+<p align="center">
+  <img src="docs/demo.gif" alt="Demonstração do app: rolagem da lista, busca, detalhes com as evoluções do Eevee, comparação entre pokémons e ranking dos favoritos" width="300">
+</p>
 
 ## O que tem dentro
 

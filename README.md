@@ -207,5 +207,8 @@ npx eas-cli build --profile preview --platform android
 
 ## Licença
 
-Projeto de estudo, sem fins comerciais. Dados e imagens vêm da PokeAPI.
-Pokémon é marca registrada da Nintendo, Game Freak e The Pokémon Company.
+O código é distribuído sob a licença [MIT](LICENSE).
+
+A licença cobre **apenas o código**. Os nomes, dados e imagens dos pokémons vêm
+da PokeAPI e não fazem parte dela: Pokémon é marca registrada da Nintendo, Game
+Freak e The Pokémon Company, e este é um projeto de estudo, sem fins comerciais.

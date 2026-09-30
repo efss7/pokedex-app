@@ -45,6 +45,14 @@ Os fluxos miram `accessibilityLabel` em vez de texto visível. É mais estável
 (texto de UI muda com frequência) e tem efeito colateral bom: se um seletor
 quebra, normalmente é porque a acessibilidade regrediu junto.
 
-**Os fluxos nunca foram executados** — foram escritos com os seletores
-conferidos contra o código, mas sem build disponível no momento. Espere ajustes
-de espera/timing na primeira execução real.
+## Armadilhas já encontradas
+
+Aprendidas na primeira execução real, num emulador Android:
+
+- **`assertVisible` só enxerga o viewport.** Ele não rola. A seção de evoluções
+  fica abaixo da dobra, então precisa de `scrollUntilVisible` antes.
+- **O texto lido é o valor cru, não o exibido.** O card de evolução usa
+  `textTransform: 'capitalize'`, que é só visual: o Maestro lê `vaporeon` em
+  minúsculo, mesmo com "Vaporeon" na tela.
+- **Grade com rolagem horizontal.** Na cadeia do Eevee os últimos cards ficam
+  fora da tela, então as asserções miram os primeiros ramos.

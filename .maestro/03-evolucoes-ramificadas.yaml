@@ -9,13 +9,16 @@ appId: com.efss7.pokedexapp
 - inputText: 'eevee'
 - tapOn: 'Ver detalhes de eevee'
 
-- assertVisible: 'Evoluções'
+# A seção de evoluções fica abaixo da dobra: precisa rolar até ela.
+# Os nomes são comparados em minúsculo porque o card renderiza o valor cru da
+# API — o "capitalize" do estilo é só visual e não muda o texto acessível.
 - scrollUntilVisible:
     element:
-      text: 'Vaporeon'
+      text: 'vaporeon'
     direction: DOWN
 
-# Vaporeon e Sylveon são o primeiro e o último ramo: se os dois aparecem,
-# a cadeia não foi truncada.
-- assertVisible: 'Vaporeon'
-- assertVisible: 'Sylveon'
+# Vaporeon e Jolteon são dois ramos distintos do MESMO estágio, e caem na
+# primeira coluna da grade. Se a cadeia fosse truncada no primeiro caminho,
+# só um deles existiria.
+- assertVisible: 'vaporeon'
+- assertVisible: 'jolteon'

@@ -6,8 +6,9 @@ appId: com.efss7.pokedexapp
     clearState: true
 
 - tapOn: 'Ver detalhes de bulbasaur'
-- assertVisible: 'Evoluções'
 
+# O botão de favoritar fica no topo do detalhe, então serve de confirmação
+# de que a navegação aconteceu — sem depender de seção abaixo da dobra.
 - tapOn: 'Adicionar aos favoritos'
 - assertVisible: 'Remover dos favoritos'
 

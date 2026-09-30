@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@theme/ThemeProvider';
@@ -64,6 +65,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onChangeTerm, loading = fa
           style={styles.icon}
         />
         <TextInput
+          nativeID={ID_BUSCA}
           style={[styles.input, { color: theme.colors.text }]}
           placeholder="Buscar por nome ou ID..."
           placeholderTextColor={theme.colors.textSecondary}
@@ -92,6 +94,34 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onChangeTerm, loading = fa
     </View>
   );
 };
+
+const ID_BUSCA = 'pokedex-busca';
+
+/**
+ * Remove o anel de foco que o navegador desenha no <input> que o
+ * react-native-web renderiza.
+ *
+ * Precisa ser CSS de verdade, e não estilo do RN: o anel vem da pseudo-classe
+ * `:focus-visible` da folha de estilo do navegador, e as classes atômicas que
+ * o RNW gera não alcançam pseudo-classes. Por isso a regra é injetada no
+ * documento, uma vez, mirando o id do campo.
+ *
+ * Seguro do ponto de vista de acessibilidade porque este campo tem indicador
+ * próprio: a borda e o ícone ficam vermelhos ao receber foco. Os outros campos
+ * do app não têm, então neles o anel do navegador é mantido de propósito — é a
+ * única pista de foco para quem navega por teclado.
+ */
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const idDaRegra = 'pokedex-sem-anel-de-foco';
+
+  if (!document.getElementById(idDaRegra)) {
+    const tag = document.createElement('style');
+    tag.id = idDaRegra;
+    tag.textContent =
+      `#${ID_BUSCA}:focus, #${ID_BUSCA}:focus-visible { outline: none !important; box-shadow: none !important; }`;
+    document.head.appendChild(tag);
+  }
+}
 
 const styles = StyleSheet.create({
   container: {

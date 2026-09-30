@@ -1,0 +1,16 @@
+# Busca: o caminho mais percorrido do app.
+appId: com.efss7.pokedexapp
+---
+- launchApp:
+    clearState: true
+
+- assertVisible: 'Pokédex'
+
+- tapOn: 'Buscar por nome ou ID...'
+- inputText: 'pikachu'
+
+# A busca tem debounce de 400ms; o assert já espera por padrão.
+- assertVisible: 'Ver detalhes de pikachu'
+
+- tapOn: 'Limpar busca'
+- assertVisible: 'Ver detalhes de bulbasaur'

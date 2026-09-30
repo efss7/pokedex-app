@@ -138,10 +138,14 @@ o conteúdo que está sendo commitado — e não contra a árvore de trabalho, q
 a pegadinha comum e deixa passar código quebrado. O mesmo conjunto roda no CI a
 cada pull request, e o deploy só acontece se tudo passar.
 
+Os fluxos de ponta a ponta ficam em `.maestro/` e rodam contra o app instalado,
+não no Expo Go — detalhes e pré-requisitos no README de lá.
+
 ```bash
 npm test          # suíte completa
 npm run typecheck # verificação de tipos
 npm run lint      # sem tolerar warnings
+npm run test:e2e  # fluxos Maestro (precisa de build instalada)
 ```
 
 ## Rodando localmente

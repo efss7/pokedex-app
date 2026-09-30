@@ -6,7 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppTheme } from '@theme/ThemeProvider';
 import type { EvolutionChain as EvolutionChainType } from '@/types/pokemon';
 import type { RootStackParamList } from '@navigation/AppNavigator';
-import { parseEvolutionChain } from '@utils/evolutionHelper';
+import { parseEvolutionChain, type SimplifiedEvolution } from '@utils/evolutionHelper';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -55,6 +55,27 @@ export const PokemonEvolutionChain: React.FC<PokemonEvolutionChainProps> = ({
     );
   }
 
+  // Agrupa por estágio: cada grupo vira uma coluna, então evoluções
+  // paralelas (ex.: as 8 formas de Eevee) aparecem lado a lado em vez de
+  // uma sozinha
+  const stages = new Map<number, SimplifiedEvolution[]>();
+  evolutions.forEach((evolution) => {
+    const group = stages.get(evolution.stage) ?? [];
+    group.push(evolution);
+    stages.set(evolution.stage, group);
+  });
+  const orderedStages = [...stages.entries()].sort(([a], [b]) => a - b);
+
+  // O ScrollView é horizontal, então a coluna que quebra precisa de largura
+  // EXPLÍCITA: o Yoga não deduz a largura das colunas geradas pelo wrap dentro
+  // de um container de rolagem, e o excedente fica cortado — no Eevee sumiam
+  // duas das oito evoluções. Com o card de altura fixa, a conta é exata.
+  const porColuna = Math.max(1, Math.floor((ALTURA_MAX_COLUNA + GAP) / (ALTURA_CARD + GAP)));
+  const larguraDaColuna = (total: number) => {
+    const colunas = Math.ceil(total / porColuna);
+    return colunas * LARGURA_CARD + (colunas - 1) * GAP;
+  };
+
   return (
     <View style={styles.container}>
       <Text style={[styles.title, { color: theme.colors.text }]}>
@@ -66,79 +87,88 @@ export const PokemonEvolutionChain: React.FC<PokemonEvolutionChainProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {evolutions.map((evolution, index) => {
-          const isCurrentPokemon = evolution.id === currentPokemonId;
-          const isLastEvolution = index === evolutions.length - 1;
+        {orderedStages.map(([stage, stageEvolutions], stageIndex) => {
+          const isLastStage = stageIndex === orderedStages.length - 1;
 
           return (
-            <React.Fragment key={evolution.id}>
-              {/* Card da evolução */}
-              <TouchableOpacity
-                style={[
-                  styles.evolutionCard,
-                  {
-                    backgroundColor: isCurrentPokemon 
-                      ? theme.colors.primary + '20' 
-                      : theme.colors.surface,
-                    borderColor: isCurrentPokemon 
-                      ? theme.colors.primary 
-                      : theme.colors.border,
-                  },
-                ]}
-                onPress={() => {
-                  if (evolution.id !== currentPokemonId) {
-                    navigation.push('PokemonDetail', { pokemonId: evolution.id });
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <Image
-                  source={evolution.imageUrl}
-                  style={styles.image}
-                  contentFit="contain"
-                  transition={200}
-                  cachePolicy="memory-disk"
-                />
-                <Text
-                  style={[
-                    styles.name,
-                    { 
-                      color: theme.colors.text,
-                      fontWeight: isCurrentPokemon ? '700' : '600',
-                    },
-                  ]}
-                >
-                  {evolution.name}
-                </Text>
-                <Text style={[styles.id, { color: theme.colors.textSecondary }]}>
-                  #{evolution.id.toString().padStart(3, '0')}
-                </Text>
-              </TouchableOpacity>
+            <React.Fragment key={stage}>
+              {/* Coluna com todas as evoluções deste estágio */}
+              <View style={[styles.stageColumn, { width: larguraDaColuna(stageEvolutions.length) }]}>
+                {stageEvolutions.map((evolution) => {
+                  const isCurrentPokemon = evolution.id === currentPokemonId;
 
-              {/* Seta e condição de evolução (não exibir após o último) */}
-              {!isLastEvolution && (
+                  return (
+                    <TouchableOpacity
+                      key={evolution.id}
+                      style={[
+                        styles.evolutionCard,
+                        {
+                          backgroundColor: isCurrentPokemon
+                            ? theme.colors.primary + '20'
+                            : theme.colors.surface,
+                          borderColor: isCurrentPokemon
+                            ? theme.colors.primary
+                            : theme.colors.border,
+                        },
+                      ]}
+                      onPress={() => {
+                        if (evolution.id !== currentPokemonId) {
+                          navigation.push('PokemonDetail', { pokemonId: evolution.id });
+                        }
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Image
+                        source={evolution.imageUrl}
+                        style={styles.image}
+                        contentFit="contain"
+                        transition={200}
+                        cachePolicy="memory-disk"
+                      />
+                      <Text
+                        style={[
+                          styles.name,
+                          {
+                            color: theme.colors.text,
+                            fontWeight: isCurrentPokemon ? '700' : '600',
+                          },
+                        ]}
+                      >
+                        {evolution.name}
+                      </Text>
+                      <Text style={[styles.id, { color: theme.colors.textSecondary }]}>
+                        #{evolution.id.toString().padStart(3, '0')}
+                      </Text>
+
+                      {/* Condição de evolução: fica no card porque, com
+                          ramificações, cada entrada do estágio pode ter uma
+                          condição diferente (ex.: cada pedra evolutiva do Eevee) */}
+                      {evolution.condition && (
+                        <View
+                          style={[
+                            styles.conditionBadge,
+                            { backgroundColor: theme.colors.background, borderColor: theme.colors.border },
+                          ]}
+                        >
+                          <Text
+                            style={[styles.conditionText, { color: theme.colors.textSecondary }]}
+                            numberOfLines={2}
+                          >
+                            {evolution.condition}
+                          </Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Seta entre estágios (não exibir após o último) */}
+              {!isLastStage && (
                 <View style={styles.arrowContainer}>
-                  {/* Seta */}
                   <Text style={[styles.arrow, { color: theme.colors.textSecondary }]}>
                     →
                   </Text>
-                  
-                  {/* Condição de evolução */}
-                  {evolutions[index + 1].condition && (
-                    <View
-                      style={[
-                        styles.conditionBadge,
-                        { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-                      ]}
-                    >
-                      <Text
-                        style={[styles.conditionText, { color: theme.colors.textSecondary }]}
-                        numberOfLines={2}
-                      >
-                        {evolutions[index + 1].condition}
-                      </Text>
-                    </View>
-                  )}
                 </View>
               )}
             </React.Fragment>
@@ -159,6 +189,11 @@ export const PokemonEvolutionChain: React.FC<PokemonEvolutionChainProps> = ({
   );
 };
 
+const LARGURA_CARD = 120;
+const ALTURA_CARD = 170;
+const GAP = 12;
+const ALTURA_MAX_COLUNA = 2 * ALTURA_CARD + GAP; // duas linhas por coluna
+
 const styles = StyleSheet.create({
   container: {
     width: '100%',
@@ -172,8 +207,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     alignItems: 'center',
   },
+  stageColumn: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: GAP,
+    // Eevee tem 8 evoluções no mesmo estágio. Numa coluna única a seção
+    // passaria de mil pixels de altura; com o teto ela quebra em grade.
+    flexWrap: 'wrap',
+    maxHeight: ALTURA_MAX_COLUNA,
+  },
   evolutionCard: {
-    width: 120,
+    width: LARGURA_CARD,
+    // Altura fixa para o cálculo de colunas acima fechar, e para os cards do
+    // mesmo estágio alinharem mesmo com condições de tamanhos diferentes.
+    height: ALTURA_CARD,
     padding: 12,
     borderRadius: 12,
     borderWidth: 2,

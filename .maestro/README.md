@@ -12,12 +12,16 @@ setup nativo. É desvio consciente do roadmap.
 ## Pré-requisitos
 
 1. Maestro instalado: `curl -fsSL https://get.maestro.mobile.dev | bash`
-2. Uma build de desenvolvimento instalada no simulador ou aparelho:
+2. O app instalado num emulador ou aparelho. O caminho mais curto é o APK
+   Android, que roda em emulador do Android Studio sem conta paga:
    ```
-   npx eas-cli build --profile development --platform ios
+   npx eas-cli build --profile preview --platform android
    ```
-   O perfil `development` mira o **simulador iOS**, que não exige conta Apple
-   paga. Para Android, use `--profile preview --platform android` (APK).
+   O `preview` gera um APK autônomo, com o JS empacotado — não depende do
+   Metro rodando, o que é o que se quer num teste de ponta a ponta.
+
+   No iOS, o perfil `development` mira o **simulador**, que faz parte do Xcode;
+   build para iPhone físico exige conta Apple Developer paga.
 
 ## Rodando
 

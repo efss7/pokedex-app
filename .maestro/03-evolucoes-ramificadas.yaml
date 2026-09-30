@@ -11,7 +11,8 @@ appId: com.efss7.pokedexapp
 
 - assertVisible: 'Evoluções'
 - scrollUntilVisible:
-    element: 'Vaporeon'
+    element:
+      text: 'Vaporeon'
     direction: DOWN
 
 # Vaporeon e Sylveon são o primeiro e o último ramo: se os dois aparecem,
